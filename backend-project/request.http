@@ -1,0 +1,494 @@
+# TravelBrain Backend API - HTTP Requests
+# REST Client extension for VS Code
+# Use ### to separate requests
+
+# Variables
+@baseUrl = http://35.239.79.6:3004
+@contentType = application/json
+@token = 
+
+### ====================================
+### HEALTH CHECK
+### ====================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root Endpoint - API Info
+GET {{baseUrl}}/
+
+### ====================================
+### AUTHENTICATION
+### ====================================
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com"
+}
+
+### Extract token from login response
+@token = {{login.response.body.token}}
+
+### Verify JWT Token (Uses saved token)
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{token}}
+
+### ====================================
+### USERS
+### ====================================
+
+### Get All Users
+GET {{baseUrl}}/users
+
+### Get User by ID
+# @name getUser
+GET {{baseUrl}}/users/6906c23f09f5be376204c352
+
+### Create New User
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "username": "johndoe",
+  "email": "john.doe@example.com",
+  "passwordHash": "$2a$10$abcdefghijklmnopqrstuvwxyz",
+  "name": "John Doe",
+  "role": "USER",
+  "status": "ACTIVE",
+  "tz": "America/Guayaquil"
+}
+
+### Update User
+PUT {{baseUrl}}/users/677e5d8a9c5b1a2b3c4d5e6f
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe Updated",
+  "status": "ACTIVE"
+}
+
+### Delete User
+DELETE {{baseUrl}}/users/677e5d8a9c5b1a2b3c4d5e6f
+
+### ====================================
+### DESTINATIONS
+### ====================================
+
+### Get All Destinations
+GET {{baseUrl}}/destinations
+
+### Get Destination by ID
+GET {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+
+### Create New Destination
+# @name createDestination
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Quito",
+  "country": "Ecuador",
+  "description": "Capital city of Ecuador, located in the Andean highlands",
+  "lat": -0.1807,
+  "lng": -78.4678,
+  "img": "https://example.com/quito.jpg",
+  "userId": "user123"
+}
+
+### Create Destination - Galápagos Islands
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Galápagos Islands",
+  "country": "Ecuador",
+  "description": "Volcanic archipelago in the Pacific Ocean, famous for unique wildlife",
+  "lat": -0.9538,
+  "lng": -90.9656,
+  "img": "https://example.com/galapagos.jpg",
+  "userId": "user123"
+}
+
+### Create Destination - Cuenca
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Cuenca",
+  "country": "Ecuador",
+  "description": "UNESCO World Heritage city known for colonial architecture",
+  "lat": -2.9001,
+  "lng": -79.0059,
+  "img": "https://example.com/cuenca.jpg",
+  "userId": "user123"
+}
+
+### Update Destination
+PUT {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+Content-Type: {{contentType}}
+
+{
+  "description": "Updated description for this amazing destination",
+  "img": "https://example.com/updated-image.jpg"
+}
+
+### Delete Destination
+DELETE {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+
+### ====================================
+### TRIPS
+### ====================================
+
+### Get All Trips
+GET {{baseUrl}}/trips
+
+### Get Trip by ID
+GET {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+
+### Create New Trip
+# @name createTrip
+POST {{baseUrl}}/trips
+Content-Type: {{contentType}}
+
+{
+  "userId": 12345,
+  "title": "Ecuador Adventure 2026",
+  "destination": "Quito and Galápagos",
+  "startDate": "2026-03-15T00:00:00.000Z",
+  "endDate": "2026-03-25T00:00:00.000Z",
+  "budget": 2500,
+  "description": "10-day trip exploring Quito's colonial center and the unique wildlife of the Galápagos Islands"
+}
+
+### Create Trip - Beach Vacation
+POST {{baseUrl}}/trips
+Content-Type: {{contentType}}
+
+{
+  "userId": 12345,
+  "title": "Coastal Paradise",
+  "destination": "Montañita Beach",
+  "startDate": "2026-06-01T00:00:00.000Z",
+  "endDate": "2026-06-07T00:00:00.000Z",
+  "budget": 800,
+  "description": "Week-long beach vacation with surfing and relaxation"
+}
+
+### Update Trip
+PUT {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+Content-Type: {{contentType}}
+
+{
+  "budget": 3000,
+  "description": "Updated trip description with extended itinerary"
+}
+
+### Delete Trip
+DELETE {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+
+### ====================================
+### FAVORITE ROUTES
+### ====================================
+
+### Get All Favorite Routes
+GET {{baseUrl}}/favorite-routes
+
+### Get Favorite Route by ID
+GET {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+
+### Create New Favorite Route
+# @name createFavoriteRoute
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "name": "Quito to Otavalo",
+  "origin": {
+    "lat": -0.1807,
+    "lon": -78.4678,
+    "label": "Quito, Ecuador"
+  },
+  "destination": {
+    "lat": 0.2343,
+    "lon": -78.2619,
+    "label": "Otavalo, Ecuador"
+  },
+  "distanceKm": 95.5,
+  "durationSec": 5400,
+  "mode": "driving"
+}
+
+### Create Favorite Route - Cycling Route
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "name": "Quito Historic Center Tour",
+  "origin": {
+    "lat": -0.2201,
+    "lon": -78.5123,
+    "label": "Plaza Grande, Quito"
+  },
+  "destination": {
+    "lat": -0.2235,
+    "lon": -78.5117,
+    "label": "El Panecillo, Quito"
+  },
+  "distanceKm": 3.2,
+  "durationSec": 1200,
+  "mode": "cycling"
+}
+
+### Create Favorite Route - Walking Route
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "name": "Downtown Walk",
+  "origin": {
+    "lat": -0.1807,
+    "lon": -78.4678,
+    "label": "Centro Histórico"
+  },
+  "destination": {
+    "lat": -0.1850,
+    "lon": -78.4700,
+    "label": "La Mariscal"
+  },
+  "distanceKm": 2.1,
+  "durationSec": 1500,
+  "mode": "walking"
+}
+
+### Update Favorite Route
+PUT {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Route Name",
+  "distanceKm": 100.0,
+  "durationSec": 6000
+}
+
+### Delete Favorite Route
+DELETE {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+
+### ====================================
+### WEATHER
+### ====================================
+
+### Get All Weather Searches
+GET {{baseUrl}}/weathers
+
+### Get Weather by ID
+GET {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+
+### Create New Weather Search
+# @name createWeather
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+
+{
+  "userId": "677e5d8a9c5b1a2b3c4d5e6f",
+  "label": "Quito Weather",
+  "lat": -0.1807,
+  "lon": -78.4678,
+  "temp": 18.5,
+  "condition": "Partly Cloudy",
+  "humidity": 65,
+  "windSpeed": 12.5,
+  "pressure": 1013,
+  "precipitation": 0
+}
+
+### Create Weather - Galápagos
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+
+{
+  "label": "Galápagos Islands Weather",
+  "lat": -0.9538,
+  "lon": -90.9656,
+  "temp": 25.0,
+  "condition": "Sunny",
+  "humidity": 75,
+  "windSpeed": 15.0,
+  "pressure": 1012,
+  "precipitation": 0
+}
+
+### Create Weather - Cuenca
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+
+{
+  "label": "Cuenca Weather",
+  "lat": -2.9001,
+  "lon": -79.0059,
+  "temp": 16.5,
+  "condition": "Rainy",
+  "humidity": 85,
+  "windSpeed": 8.0,
+  "pressure": 1015,
+  "precipitation": 5.5
+}
+
+### Update Weather
+PUT {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+Content-Type: {{contentType}}
+
+{
+  "temp": 20.0,
+  "condition": "Sunny",
+  "humidity": 60
+}
+
+### Delete Weather
+DELETE {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+
+### ====================================
+### BATCH OPERATIONS
+### ====================================
+
+### Create Multiple Destinations at Once
+# Ecuador's Top Tourist Destinations
+
+### 1. Baños de Agua Santa
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Baños de Agua Santa",
+  "country": "Ecuador",
+  "description": "Adventure capital with waterfalls, hot springs, and outdoor activities",
+  "lat": -1.3928,
+  "lng": -78.4269,
+  "img": "https://example.com/banos.jpg",
+  "userId": "user123"
+}
+
+### 2. Mindo Cloud Forest
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Mindo Cloud Forest",
+  "country": "Ecuador",
+  "description": "Biodiversity hotspot perfect for bird watching and nature lovers",
+  "lat": -0.0462,
+  "lng": -78.7766,
+  "img": "https://example.com/mindo.jpg",
+  "userId": "user123"
+}
+
+### 3. Cotopaxi National Park
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Cotopaxi National Park",
+  "country": "Ecuador",
+  "description": "Home to one of the world's highest active volcanoes",
+  "lat": -0.6856,
+  "lng": -78.4366,
+  "img": "https://example.com/cotopaxi.jpg",
+  "userId": "user123"
+}
+
+### 4. Montañita
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Montañita",
+  "country": "Ecuador",
+  "description": "Popular surf town with vibrant nightlife and beautiful beaches",
+  "lat": -1.8275,
+  "lng": -80.7439,
+  "img": "https://example.com/montanita.jpg",
+  "userId": "user123"
+}
+
+### 5. Yasuni National Park
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Yasuni National Park",
+  "country": "Ecuador",
+  "description": "One of the most biodiverse places on Earth in the Amazon rainforest",
+  "lat": -0.6820,
+  "lng": -76.3897,
+  "img": "https://example.com/yasuni.jpg",
+  "userId": "user123"
+}
+
+### ====================================
+### TESTING & DEBUGGING
+### ====================================
+
+### Test Invalid ID Format
+GET {{baseUrl}}/users/invalid-id
+
+### Test Non-existent Resource
+GET {{baseUrl}}/users/000000000000000000000000
+
+### Test Missing Required Fields
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Test Destination"
+}
+
+### Test Invalid Coordinates
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+
+{
+  "name": "Invalid Location",
+  "country": "Test",
+  "lat": 200,
+  "lng": 200
+}
+
+### ====================================
+### PERFORMANCE TESTING
+### ====================================
+
+### Test Cache - First Request (Cache Miss)
+GET {{baseUrl}}/users
+
+### Test Cache - Second Request (Cache Hit - should be faster)
+GET {{baseUrl}}/users
+
+### Test Cache - Weather (10 min cache)
+GET {{baseUrl}}/weathers
+
+### ====================================
+### NOTES & TROUBLESHOOTING
+### ====================================
+
+# How to use:
+# 1. Install "REST Client" extension in VS Code
+# 2. Click "Send Request" above any ### request
+# 3. Replace placeholder IDs with actual MongoDB ObjectIds from your database
+# 4. Update the @baseUrl variable if using different port or domain
+
+# Tips:
+# - Use @name to save response and reference in other requests
+# - Check server logs for detailed information
+# - Cache is enabled on GET /users and GET /weathers
+# - All POST/PUT/DELETE operations invalidate related cache
+
+# Database Connection:
+# MongoDB: travel_brain
+# Same database as Project_Functional_Prototype
