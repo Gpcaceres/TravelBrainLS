@@ -6,7 +6,7 @@ require('dotenv').config();
  */
 const config = {
   // Server
-  port: process.env.PORT || 3004,
+  port: process.env.PORT || 4000,
   nodeEnv: process.env.NODE_ENV || 'development',
   
   // Database
@@ -33,7 +33,10 @@ const config = {
   // CORS
   corsOrigins: process.env.CORS_ORIGINS 
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:8000', 'http://localhost:3004', 'https://travelbrain-3tfv.onrender.com'],
+    : ['http://35.222.67.75:3001', 'http://localhost:3001', 'http://localhost:8000'],
+  
+  // Server URL
+  serverUrl: process.env.SERVER_URL || 'http://35.222.67.75:4000',
 };
 
 /**

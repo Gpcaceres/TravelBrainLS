@@ -20,7 +20,7 @@ COPY . .
 RUN git lfs pull 2>/dev/null || true
 
 # Expose port
-EXPOSE 5173
+EXPOSE 3001
 
 # Start development server
 CMD ["npm", "run", "dev", "--", "--host"]

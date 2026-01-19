@@ -8,11 +8,17 @@ const Destination = require('./Destination');
 const Trip = require('./Trip');
 const FavoriteRoute = require('./FavoriteRoute');
 const Weather = require('./Weather');
+const FacialBiometric = require('./FacialBiometric');
+const BiometricChallenge = require('./BiometricChallenge');
+const BiometricAuditLog = require('./BiometricAuditLog');
 
 module.exports = {
   User,
   Destination,
   Trip,
   FavoriteRoute,
-  Weather
+  Weather,
+  FacialBiometric,
+  BiometricChallenge,
+  BiometricAuditLog
 };

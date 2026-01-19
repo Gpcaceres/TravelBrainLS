@@ -1,0 +1,457 @@
+.biometric-advanced-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.biometric-advanced-card {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+  max-width: 700px;
+  width: 100%;
+  animation: cardFadeIn 0.6s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.title-advanced {
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 30px;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Video Wrapper con canvas overlay */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto 25px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  border: 3px solid rgba(59, 130, 246, 0.3);
+}
+
+.video-advanced {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scaleX(-1);
+  transition: transform 0.3s ease;
+}
+
+.video-advanced.pulse-effect {
+  animation: videoPulse 0.6s ease-in-out infinite;
+}
+
+@keyframes videoPulse {
+  0%, 100% {
+    transform: scaleX(-1) scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scaleX(-1) scale(1.03);
+    filter: brightness(1.1);
+  }
+}
+
+.detection-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+/* Overlay indicators */
+.overlay-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  z-index: 10;
+  backdrop-filter: blur(5px);
+}
+
+.blink-prompt {
+  animation: blinkPromptPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes blinkPromptPulse {
+  0%, 100% {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    background: rgba(30, 58, 138, 0.8);
+  }
+}
+
+.eye-animation {
+  font-size: 100px;
+  margin-bottom: 20px;
+  animation: eyeBlink 3s ease-in-out infinite;
+}
+
+@keyframes eyeBlink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+  98% {
+    transform: scaleY(1);
+  }
+}
+
+.blink-counter {
+  font-size: 48px;
+  font-weight: bold;
+  margin-top: 15px;
+  color: #60a5fa;
+  text-shadow: 0 0 20px rgba(96, 165, 250, 0.8);
+}
+
+.countdown-display {
+  background: rgba(59, 130, 246, 0.95);
+}
+
+.count-number {
+  font-size: 140px;
+  font-weight: 900;
+  animation: countAnimation 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes countAnimation {
+  0% {
+    transform: scale(0) rotate(-360deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.3) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+.success-display {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+}
+
+.check-icon {
+  font-size: 140px;
+  animation: checkmarkAnimation 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes checkmarkAnimation {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.3) rotate(15deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* Indicador de rostro detectado */
+.face-indicator {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+}
+
+.face-indicator.detected {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.face-indicator.not-detected {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Status message */
+.status-message {
+  background: #f1f5f9;
+  border-left: 5px solid #3b82f6;
+  padding: 18px 24px;
+  margin-bottom: 24px;
+  border-radius: 10px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.status-message p {
+  margin: 0;
+  color: #1e293b;
+  font-size: 17px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.status-loading,
+.status-analyzing,
+.status-capturing,
+.status-liveness-test,
+.status-countdown {
+  border-left-color: #f59e0b;
+  background: #fef3c7;
+}
+
+.status-success {
+  border-left-color: #10b981;
+  background: #d1fae5;
+}
+
+.status-error {
+  border-left-color: #ef4444;
+  background: #fee2e2;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  animation: spinAnimation 0.8s linear infinite;
+  margin-top: 12px;
+}
+
+@keyframes spinAnimation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Email section */
+.email-section {
+  margin-bottom: 28px;
+}
+
+.email-section label {
+  display: block;
+  margin-bottom: 10px;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.email-field {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.email-field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background: #f8fafc;
+}
+
+.email-field:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.btn-action {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+
+.btn-action:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+.btn-action:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary-advanced {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+  color: white;
+}
+
+.btn-primary-advanced:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.btn-retry {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  color: white;
+}
+
+.btn-retry:hover:not(:disabled) {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+}
+
+/* Security badge */
+.security-badge {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.badge-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.badge-text {
+  color: #475569;
+  font-size: 15px;
+  font-weight: 500;
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .biometric-advanced-card {
+    padding: 28px;
+  }
+
+  .title-advanced {
+    font-size: 26px;
+  }
+
+  .count-number {
+    font-size: 100px;
+  }
+
+  .check-icon {
+    font-size: 100px;
+  }
+
+  .btn-action {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  .badge-text {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .biometric-advanced-card {
+    padding: 20px;
+  }
+
+  .title-advanced {
+    font-size: 22px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-action {
+    width: 100%;
+  }
+}

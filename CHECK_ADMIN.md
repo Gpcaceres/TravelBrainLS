@@ -16,7 +16,7 @@ Ejecuta esta prueba desde la terminal o Postman:
 
 ### Login:
 ```bash
-POST http://localhost:3004/api/auth/login
+POST http://35.222.67.75:4000/api/auth/login
 Content-Type: application/json
 
 {

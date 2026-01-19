@@ -196,7 +196,7 @@ TravelBrain es una plataforma de planificación de viajes que integra informaci�
 ## ⚙️ CONFIGURACIÓN DEL SISTEMA
 
 ### Variables de Entorno
-- **BR-CFG-001**: Puerto del servidor: 3004 (configurable)
+- **BR-CFG-001**: Puerto del servidor: 4000 (configurable)
 - **BR-CFG-002**: Entorno: development/production (NODE_ENV)
 - **BR-CFG-003**: MongoDB URI y DB name son configurables
 - **BR-CFG-004**: JWT secret y expiración son configurables
@@ -229,4 +229,4 @@ TravelBrain es una plataforma de planificación de viajes que integra informaci�
 **Versión del Documento**: 1.0  
 **Fecha de Última Actualización**: 11 de Enero 2026  
 **Proyecto**: TravelBrain  
-**Ambiente**: Producción en VM (35.239.79.6)
+**Ambiente**: Producción en VM (35.222.67.75)

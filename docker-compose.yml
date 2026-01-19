@@ -1,16 +1,48 @@
 version: '3.8'
 
 services:
+  # ===== MICROSERVICIO PYTHON - ZONA RESTRINGIDA (LA BÓVEDA) =====
+  # Este servicio NO está expuesto a Internet
+  # Solo accesible desde la red interna (backend)
+  facial-recognition:
+    build:
+      context: ./facial-recognition-service
+      dockerfile: Dockerfile
+    container_name: travelbrain-facial-recognition
+    # NO EXPONER PUERTOS AL HOST - Solo accesible internamente
+    expose:
+      - "8001"
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-CHANGE_THIS_IN_PRODUCTION_INTERNAL_TOKEN_123}
+    networks:
+      - internal-network  # Red privada interna
+    restart: unless-stopped
+    # Límites de recursos para seguridad
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    # Usuario no-root (ya configurado en Dockerfile)
+    # Sin volúmenes para evitar acceso al sistema de archivos del host
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Necesita escribir temporalmente en /tmp
+
+  # ===== BACKEND NODE.JS - ZONA CONTROLADA (LA RECEPCIÓN) =====
   backend:
     build:
       context: ./backend-project
       dockerfile: Dockerfile
     container_name: travelbrain-backend
     ports:
-      - "3004:3004"
+      - "4000:4000"  # Expuesto al mundo exterior
     environment:
       - NODE_ENV=development
-      - PORT=3004
+      - PORT=4000
       - MONGO_URI=mongodb+srv://SrJCBM:bdd2025@cluster0.tjvfmrk.mongodb.net/
       - MONGO_DB=travel_brain
       - OPENWEATHER_API_KEY=51355211649b0894257fe06250faa40d
@@ -19,32 +51,69 @@ services:
       - JWT_SECRET=development-secret-key-change-in-production
       - JWT_EXPIRES_IN=7d
       - APP_TIMEZONE=America/Guayaquil
-      - CORS_ORIGINS=http://35.239.79.6:5173,http://35.222.67.75:5173,http://localhost:5173,http://localhost:8000
+      - CORS_ORIGINS=http://35.222.67.75:3001,http://localhost:3001,http://localhost:8000
+      # Configuración de biometría
+      - FACIAL_SERVICE_URL=http://facial-recognition:8001
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-CHANGE_THIS_IN_PRODUCTION_INTERNAL_TOKEN_123}
+      - BIOMETRIC_MASTER_KEY=${BIOMETRIC_MASTER_KEY:-CHANGE_THIS_MASTER_KEY_IN_PRODUCTION_256BITS}
+      - VERIFICATION_THRESHOLD=0.6
     volumes:
       - ./backend-project:/app
       - /app/node_modules
     networks:
-      - travelbrain-network
+      - travelbrain-network  # Red pública (acceso a Internet)
+      - internal-network     # Red privada (acceso a facial-recognition)
+    depends_on:
+      - facial-recognition
     restart: unless-stopped
+    # Healthcheck para monitoreo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # ===== FRONTEND REACT - ZONA PÚBLICA (EL LOBBY) =====
   frontend:
     build:
       context: ./frontend-react
       dockerfile: Dockerfile
     container_name: travelbrain-frontend
     ports:
-      - "5173:5173"
+      - "3001:3001"  # Expuesto al mundo exterior
     environment:
-      - VITE_API_URL=http://35.239.79.6:3004
+      - VITE_API_URL=http://35.222.67.75:4000
+      - VITE_API_BASE_URL=http://35.222.67.75:4000
     volumes:
       - ./frontend-react:/app
       - /app/node_modules
     networks:
-      - travelbrain-network
+      - travelbrain-network  # Solo red pública
     depends_on:
       - backend
     restart: unless-stopped
 
 networks:
+  # Red pública - Acceso a Internet
   travelbrain-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  
+  # Red privada interna - SIN acceso a Internet
+  # Solo para comunicación backend <-> facial-recognition
+  internal-network:
+    driver: bridge
+    internal: true  # CRÍTICO: No permite tráfico externo
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  # Volumen temporal para el servicio de reconocimiento facial
+  # Se limpia automáticamente
+  facial-temp-data:
+    driver: local
+
