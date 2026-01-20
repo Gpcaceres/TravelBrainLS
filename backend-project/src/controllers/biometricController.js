@@ -570,7 +570,9 @@ const registerBiometric = async (req, res) => {
       });
     }
     
-    if (extractionData.liveness_score < 0.7) {
+    // Ajustado a 0.6 para permitir capturas desde canvas que tienen scores de texture/moiré más bajos
+    // pero siguen siendo legítimas capturas en vivo de webcam
+    if (extractionData.liveness_score < 0.6) {
       return res.status(400).json({
         success: false,
         message: 'La imagen no pasó las pruebas de autenticidad. Use una cámara en vivo.'

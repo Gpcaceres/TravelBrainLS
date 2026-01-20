@@ -16,6 +16,14 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  
+  // Refs para el control de parpadeo sin dependencias de estado
+  const blinkCountRef = useRef(0);
+  const lastEyeStateRef = useRef('open');
+  const isProcessingBlinksRef = useRef(false);
+  const stepRef = useRef('loading'); // Ref para el step actual sin problemas de closure
+  const emailRef = useRef(''); // Ref para el email
+  const challengeTokenRef = useRef(''); // Ref para el token de desafío
 
   const [step, setStep] = useState('loading'); // loading, idle, ready, liveness-test, countdown, capturing, analyzing, success, error
   const [message, setMessage] = useState('Cargando modelos de IA...');
@@ -33,11 +41,20 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
 
   // Seguimiento de parpadeo
   const [eyeAspectRatio, setEyeAspectRatio] = useState(1.0);
-  const [blinkThreshold] = useState(0.25); // Umbral para detectar ojo cerrado
+  const [blinkThreshold] = useState(0.3); // Umbral para detectar ojo cerrado (bajado de 0.25 a 0.3 para mayor sensibilidad)
   const [lastEyeState, setLastEyeState] = useState('open');
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
   const MODEL_URL = '/models'; // Ruta donde se almacenan los modelos de face-api.js
+
+  /**
+   * Helper para actualizar step en state y ref simultáneamente
+   */
+  const updateStep = (newStep) => {
+    console.log('[BiometricLogin] Cambiando step:', stepRef.current, '→', newStep);
+    setStep(newStep);
+    stepRef.current = newStep;
+  };
 
   /**
    * Cargar modelos de Face-API.js al montar el componente
@@ -46,6 +63,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     const loadModels = async () => {
       try {
         setMessage('Cargando modelos de reconocimiento facial...');
+        console.log('[BiometricLogin] Iniciando carga de modelos desde:', MODEL_URL);
 
         // Cargar modelos necesarios
         await Promise.all([
@@ -54,16 +72,20 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
           faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
         ]);
 
+        console.log('[BiometricLogin] Modelos cargados correctamente');
+        console.log('[BiometricLogin] TinyFaceDetector loaded:', faceapi.nets.tinyFaceDetector.isLoaded);
+        console.log('[BiometricLogin] FaceLandmark68Net loaded:', faceapi.nets.faceLandmark68Net.isLoaded);
+        
         setModelsLoaded(true);
-        setStep('idle');
+        updateStep('idle');
         setMessage('Modelos cargados. Iniciando cámara...');
         
         // Iniciar cámara
         await startCamera();
       } catch (error) {
-        console.error('Error cargando modelos:', error);
+        console.error('[BiometricLogin] Error cargando modelos:', error);
         setMessage('Error cargando modelos de IA. Por favor, recargue la página.');
-        setStep('error');
+        updateStep('error');
       }
     };
 
@@ -79,6 +101,8 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
    */
   const startCamera = async () => {
     try {
+      console.log('[BiometricLogin] Solicitando acceso a la cámara...');
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -87,21 +111,36 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
         }
       });
 
+      console.log('[BiometricLogin] Cámara accedida, configurando video...');
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
 
-        // Esperar a que el video esté listo
+        // Esperar a que el video esté listo y reproduciendo
         videoRef.current.onloadedmetadata = () => {
-          setStep('ready');
-          setMessage('Cámara iniciada. Por favor ingrese su email.');
-          
-          // Iniciar detección continua de rostro
-          startFaceDetection();
+          console.log('[BiometricLogin] Video metadata cargada');
+          videoRef.current.play()
+            .then(() => {
+              console.log('[BiometricLogin] Video reproduciendo, dimensiones:', 
+                videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+              
+              setStep('ready');
+              setMessage('Cámara iniciada. Por favor ingrese su email.');
+              
+              // Esperar un poco antes de iniciar detección
+              setTimeout(() => {
+                console.log('[BiometricLogin] Iniciando detección facial...');
+                startFaceDetection();
+              }, 500);
+            })
+            .catch(err => {
+              console.error('[BiometricLogin] Error al reproducir video:', err);
+            });
         };
       }
     } catch (error) {
-      console.error('Error accediendo a la cámara:', error);
+      console.error('[BiometricLogin] Error accediendo a la cámara:', error);
       setMessage('No se pudo acceder a la cámara. Verifique los permisos.');
       setStep('error');
       if (onError) onError('camera_access_denied');
@@ -128,23 +167,55 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (!video || !canvas) return;
+    console.log('[BiometricLogin] startFaceDetection iniciado');
+    console.log('[BiometricLogin] Video ref:', !!video);
+    console.log('[BiometricLogin] Canvas ref:', !!canvas);
+    console.log('[BiometricLogin] Video ready:', video?.readyState);
+    console.log('[BiometricLogin] Video dimensions:', video?.videoWidth, 'x', video?.videoHeight);
+
+    if (!video || !canvas) {
+      console.error('[BiometricLogin] Video o canvas no disponible');
+      return;
+    }
+
+    // Verificar que el video tenga dimensiones
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.warn('[BiometricLogin] Video sin dimensiones, esperando...');
+      setTimeout(() => startFaceDetection(), 100);
+      return;
+    }
 
     const displaySize = {
       width: video.videoWidth,
       height: video.videoHeight
     };
 
+    console.log('[BiometricLogin] Display size:', displaySize);
     faceapi.matchDimensions(canvas, displaySize);
 
+    let detectionCount = 0;
+    
     const detectFaces = async () => {
-      if (!video || video.paused || video.ended) return;
+      if (!video || video.paused || video.ended || step === 'capturing' || step === 'analyzing') {
+        console.log('[BiometricLogin] Detección pausada:', { paused: video?.paused, ended: video?.ended, step });
+        return;
+      }
 
       try {
+        detectionCount++;
+        if (detectionCount % 30 === 0) {
+          console.log('[BiometricLogin] Detección #', detectionCount);
+        }
+
         const detections = await faceapi
-          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({
+            inputSize: 512,
+            scoreThreshold: 0.5
+          }))
           .withFaceLandmarks()
           .withFaceExpressions();
+
+        console.log('[BiometricLogin] Rostros detectados:', detections.length);
 
         // Limpiar canvas
         const ctx = canvas.getContext('2d');
@@ -153,29 +224,46 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
         if (detections.length > 0) {
           const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-          // Dibujar detecciones
+          // Dibujar detecciones con colores del tema
           faceapi.draw.drawDetections(canvas, resizedDetections);
           faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
 
-          // Solo procesar el primer rostro
+          // Dibujar marco verde alrededor del rostro
           const detection = resizedDetections[0];
+          const box = detection.detection.box;
+          ctx.strokeStyle = '#47F59A';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+          if (!faceDetected) {
+            console.log('[BiometricLogin] ¡Rostro detectado!');
+          }
           setFaceDetected(true);
 
           // Si estamos en prueba de vida, analizar parpadeo
-          if (step === 'liveness-test') {
+          const currentStep = stepRef.current;
+          console.log('[BiometricLogin] Step actual:', currentStep);
+          
+          if (currentStep === 'liveness-test') {
+            console.log('[BiometricLogin] Analizando parpadeo...');
             analyzeBlinking(detection);
           }
         } else {
+          if (faceDetected) {
+            console.log('[BiometricLogin] Rostro perdido');
+          }
           setFaceDetected(false);
         }
 
         // Continuar detección
         requestAnimationFrame(detectFaces);
       } catch (error) {
-        console.error('Error en detección facial:', error);
+        console.error('[BiometricLogin] Error en detección facial:', error);
+        requestAnimationFrame(detectFaces);
       }
     };
 
+    console.log('[BiometricLogin] Iniciando loop de detección...');
     detectFaces();
   };
 
@@ -183,6 +271,11 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
    * Analizar parpadeo usando Eye Aspect Ratio (EAR)
    */
   const analyzeBlinking = (detection) => {
+    // Evitar procesamiento si ya completamos los 2 parpadeos
+    if (isProcessingBlinksRef.current) {
+      return;
+    }
+
     const landmarks = detection.landmarks;
     const leftEye = landmarks.getLeftEye();
     const rightEye = landmarks.getRightEye();
@@ -192,31 +285,48 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     const rightEAR = calculateEAR(rightEye);
     const avgEAR = (leftEAR + rightEAR) / 2.0;
 
+    // Log continuo del EAR para debugging (cada 30 frames aproximadamente)
+    if (Math.random() < 0.1) {
+      console.log('[BiometricLogin] EAR actual:', avgEAR.toFixed(3), '| Threshold:', blinkThreshold, '| Estado:', lastEyeStateRef.current);
+    }
+
     setEyeAspectRatio(avgEAR);
 
+    const currentEyeState = lastEyeStateRef.current;
+
     // Detectar cambio de estado del ojo
-    if (avgEAR < blinkThreshold && lastEyeState === 'open') {
+    if (avgEAR < blinkThreshold && currentEyeState === 'open') {
       // Ojo se cerró
+      console.log('[BiometricLogin] ✅ Ojo cerrado detectado! EAR:', avgEAR.toFixed(3), '<', blinkThreshold);
+      lastEyeStateRef.current = 'closed';
       setLastEyeState('closed');
-    } else if (avgEAR >= blinkThreshold && lastEyeState === 'closed') {
+    } else if (avgEAR >= blinkThreshold && currentEyeState === 'closed') {
       // Ojo se abrió (parpadeo completo)
+      console.log('[BiometricLogin] ✅ Parpadeo completado! EAR:', avgEAR.toFixed(3), '>=', blinkThreshold);
+      lastEyeStateRef.current = 'open';
       setLastEyeState('open');
-      setBlinkCount(prev => {
-        const newCount = prev + 1;
-        setMessage(`Parpadeo detectado (${newCount}/2)`);
+      
+      // Incrementar contador
+      blinkCountRef.current += 1;
+      const newCount = blinkCountRef.current;
+      setBlinkCount(newCount);
+      
+      console.log('[BiometricLogin] 🎯 Contador de parpadeos:', newCount, '/2');
+      setMessage(`Parpadeo detectado (${newCount}/2)`);
 
-        if (newCount >= 2) {
-          // Prueba de vida completada
-          setMessage('¡Prueba de vida completada! Preparando captura...');
-          setLivenessScore(0.9); // Alta confianza
-          
-          setTimeout(() => {
-            startCountdown();
-          }, 1500);
-        }
-
-        return newCount;
-      });
+      if (newCount >= 2) {
+        // Prueba de vida completada
+        console.log('[BiometricLogin] 🎉 ¡2 parpadeos detectados! Iniciando countdown...');
+        isProcessingBlinksRef.current = true; // Evitar más procesamiento
+        setMessage('¡Prueba de vida completada! Preparando captura...');
+        setLivenessScore(0.9); // Alta confianza
+        
+        // IMPORTANTE: Cambiar el step antes de iniciar countdown
+        setTimeout(() => {
+          console.log('[BiometricLogin] Ejecutando startCountdown()');
+          startCountdown();
+        }, 1500);
+      }
     }
   };
 
@@ -267,7 +377,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     }
 
     setLoading(true);
-    setStep('requesting-challenge');
+    updateStep('requesting-challenge');
     setMessage('Solicitando autenticación...');
 
     try {
@@ -288,8 +398,15 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
         throw new Error(data.message || 'Error solicitando autenticación');
       }
 
+      // Guardar en state y refs
       setChallengeToken(data.data.challengeToken);
-      setStep('instructions');
+      challengeTokenRef.current = data.data.challengeToken;
+      emailRef.current = email;
+      
+      console.log('[BiometricLogin] Challenge token guardado:', challengeTokenRef.current);
+      console.log('[BiometricLogin] Email guardado:', emailRef.current);
+      
+      updateStep('instructions');
       setMessage('Desafío recibido. Preparando prueba de vida...');
       setLoading(false);
 
@@ -301,7 +418,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     } catch (error) {
       console.error('Error solicitando desafío:', error);
       setMessage(error.message);
-      setStep('error');
+      updateStep('error');
       setLoading(false);
       if (onError) onError(error.message);
     }
@@ -311,17 +428,26 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
    * Iniciar prueba de vida
    */
   const startLivenessTest = () => {
-    setStep('liveness-test');
+    console.log('[BiometricLogin] Iniciando prueba de vida');
+    updateStep('liveness-test');
     setMessage('Por favor, parpadee lentamente 2 veces');
     setBlinkCount(0);
     setLastEyeState('open');
+    
+    // Resetear refs
+    blinkCountRef.current = 0;
+    lastEyeStateRef.current = 'open';
+    isProcessingBlinksRef.current = false;
+    
+    console.log('[BiometricLogin] Refs reseteados - blinkCount:', blinkCountRef.current);
   };
 
   /**
    * Countdown antes de captura
    */
   const startCountdown = () => {
-    setStep('countdown');
+    console.log('[BiometricLogin] startCountdown() llamado');
+    updateStep('countdown');
     let count = 3;
     setCountdown(count);
     setMessage(`Capturando en ${count}...`);
@@ -329,11 +455,13 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     const timer = setInterval(() => {
       count--;
       setCountdown(count);
+      console.log('[BiometricLogin] Countdown:', count);
       
       if (count > 0) {
         setMessage(`Capturando en ${count}...`);
       } else {
         clearInterval(timer);
+        console.log('[BiometricLogin] Countdown terminado, capturando...');
         captureAndVerify();
       }
     }, 1000);
@@ -343,12 +471,15 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
    * Capturar y verificar
    */
   const captureAndVerify = async () => {
-    setStep('capturing');
+    console.log('[BiometricLogin] captureAndVerify() iniciado');
+    updateStep('capturing');
     setMessage('Capturando imagen...');
 
     try {
       const canvas = canvasRef.current;
       const video = videoRef.current;
+
+      console.log('[BiometricLogin] Canvas y video obtenidos');
 
       // Crear un canvas temporal para captura limpia
       const captureCanvas = document.createElement('canvas');
@@ -357,19 +488,35 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
       const ctx = captureCanvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
 
+      console.log('[BiometricLogin] Imagen dibujada en canvas temporal');
+
       // Convertir a blob
       const blob = await new Promise((resolve) => {
         captureCanvas.toBlob(resolve, 'image/jpeg', 0.95);
       });
 
-      setStep('analyzing');
+      console.log('[BiometricLogin] Blob creado, tamaño:', blob.size, 'bytes');
+
+      updateStep('analyzing');
       setMessage('Analizando identidad biométrica...');
+
+      // Usar refs para evitar problemas de closure
+      const currentEmail = emailRef.current;
+      const currentToken = challengeTokenRef.current;
+      
+      console.log('[BiometricLogin] Valores actuales - Email:', currentEmail, 'Token:', currentToken);
+
+      if (!currentEmail || !currentToken) {
+        throw new Error('Token de desafío y email son requeridos');
+      }
 
       // Enviar al backend
       const formData = new FormData();
       formData.append('face', blob, 'face.jpg');
-      formData.append('challengeToken', challengeToken);
-      formData.append('email', email);
+      formData.append('challengeToken', currentToken);
+      formData.append('email', currentEmail);
+
+      console.log('[BiometricLogin] Enviando al backend - Email:', currentEmail, 'Challenge Token:', currentToken);
 
       const response = await fetch(`${API_BASE_URL}/api/biometric/verify`, {
         method: 'POST',
@@ -377,23 +524,30 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
       });
 
       const data = await response.json();
+      console.log('[BiometricLogin] Respuesta del backend:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Error verificando identidad');
       }
 
       // Éxito
-      setStep('success');
+      console.log('[BiometricLogin] ¡Verificación exitosa!');
+      console.log('[BiometricLogin] Data recibida:', JSON.stringify(data, null, 2));
+      console.log('[BiometricLogin] Token:', data.data?.token);
+      console.log('[BiometricLogin] User:', data.data?.user);
+      
+      updateStep('success');
       setMessage('¡Identidad verificada exitosamente!');
       stopCamera();
 
       if (onSuccess) {
+        console.log('[BiometricLogin] Llamando onSuccess con:', data.data);
         onSuccess(data.data);
       }
 
     } catch (error) {
-      console.error('Error capturando/verificando:', error);
-      setStep('error');
+      console.error('[BiometricLogin] Error capturando/verificando:', error);
+      updateStep('error');
       setMessage(error.message || 'No se pudo verificar la identidad');
       if (onError) onError(error.message);
     }
@@ -403,7 +557,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
    * Reiniciar
    */
   const restart = () => {
-    setStep('ready');
+    updateStep('ready');
     setMessage('Listo para iniciar. Ingrese su email.');
     setEmail('');
     setChallengeToken('');
@@ -420,7 +574,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
         </h2>
 
         {/* Contenedor de video con canvas overlay */}
-        <div className="video-wrapper">
+        <div className={`video-wrapper ${faceDetected ? 'face-detected' : ''}`}>
           <video
             ref={videoRef}
             autoPlay

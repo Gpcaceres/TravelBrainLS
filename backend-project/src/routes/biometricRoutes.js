@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const biometricController = require('../controllers/biometricController');
-const { protect } = require('../middlewares/auth');
+const { authenticate } = require('../middlewares/auth');
 
 /**
  * Configuración de Multer para manejo de imágenes en memoria
@@ -60,7 +60,7 @@ router.post(
  */
 router.post(
   '/register',
-  protect,
+  authenticate,
   upload.single('face'),
   biometricController.registerBiometric
 );
@@ -70,7 +70,7 @@ router.post(
  * @desc    Obtener estado de biometría del usuario
  * @access  Private
  */
-router.get('/status', protect, biometricController.getBiometricStatus);
+router.get('/status', authenticate, biometricController.getBiometricStatus);
 
 /**
  * Manejo de errores de Multer

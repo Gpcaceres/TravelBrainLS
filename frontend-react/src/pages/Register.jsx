@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../services/api'
 import { API_CONFIG } from '../config'
+import BiometricRegister from '../components/BiometricRegister'
 import '../styles/Auth.css'
 
 export default function Register() {
@@ -15,6 +16,7 @@ export default function Register() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showBiometricSetup, setShowBiometricSetup] = useState(false)
   const { saveAuth } = useAuth()
   const navigate = useNavigate()
 
@@ -45,11 +47,24 @@ export default function Register() {
 
       if (registerResponse.data.success && registerResponse.data.token) {
         saveAuth(registerResponse.data.token, registerResponse.data.user)
-        navigate('/dashboard')
+        setLoading(false)
+        // Mostrar modal de registro biométrico
+        setShowBiometricSetup(true)
+      } else {
+        setError(registerResponse.data.message || 'Registration failed')
+        setLoading(false)
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.')
-    } finally {
+      console.error('Registration error:', err)
+      let errorMessage = 'Registration failed. Please try again.'
+      
+      if (err.response?.status === 409) {
+        errorMessage = 'This email or username is already registered. Please use a different one.'
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      }
+      
+      setError(errorMessage)
       setLoading(false)
     }
   }
@@ -170,6 +185,38 @@ export default function Register() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Registro Biométrico */}
+      {showBiometricSetup && (
+        <div className="biometric-modal-overlay">
+          <div className="biometric-modal-content" style={{ maxWidth: '700px' }}>
+            <BiometricRegister
+              onSuccess={() => {
+                setShowBiometricSetup(false)
+                // Limpiar sesión y redirigir al login
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                navigate('/login', { state: { message: '¡Registro exitoso! Ahora puedes iniciar sesión.' } })
+              }}
+              onSkip={() => {
+                setShowBiometricSetup(false)
+                // Limpiar sesión y redirigir al login
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                navigate('/login', { state: { message: 'Registro completado. Ahora puedes iniciar sesión.' } })
+              }}
+              onError={(error) => {
+                console.error('Biometric error:', error)
+                setShowBiometricSetup(false)
+                // Limpiar sesión y redirigir al login
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                navigate('/login', { state: { message: 'Registro completado. Ahora puedes iniciar sesión.' } })
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

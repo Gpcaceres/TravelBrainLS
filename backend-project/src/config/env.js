@@ -33,10 +33,10 @@ const config = {
   // CORS
   corsOrigins: process.env.CORS_ORIGINS 
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://35.222.67.75:3001', 'http://localhost:3001', 'http://localhost:8000'],
+    : ['http://localhost:3001', 'http://localhost:8000'],
   
   // Server URL
-  serverUrl: process.env.SERVER_URL || 'http://35.222.67.75:4000',
+  serverUrl: process.env.SERVER_URL || 'http://localhost:4000',
 };
 
 /**

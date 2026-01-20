@@ -18,6 +18,7 @@ import io
 import logging
 from datetime import datetime
 import hashlib
+import os
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
@@ -30,7 +31,8 @@ app = FastAPI(
 )
 
 # Token de seguridad interno (debe coincidir con el backend)
-INTERNAL_SERVICE_TOKEN = "CHANGE_THIS_IN_PRODUCTION_INTERNAL_TOKEN_123"
+INTERNAL_SERVICE_TOKEN = os.getenv('INTERNAL_SERVICE_TOKEN', 'CHANGE_THIS_IN_PRODUCTION_INTERNAL_TOKEN_123')
+logger.info(f"Internal token configured: {INTERNAL_SERVICE_TOKEN[:10]}...")
 
 
 class FaceEncodingResponse(BaseModel):

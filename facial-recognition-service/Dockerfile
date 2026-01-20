@@ -1,5 +1,5 @@
-# Usar una imagen base con Python y dependencias de sistema
-FROM python:3.10-slim
+# Usar una imagen base con más herramientas (no slim)
+FROM python:3.10-bullseye
 
 # Configurar variables de entorno para compilación
 ENV DEBIAN_FRONTEND=noninteractive
@@ -30,8 +30,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 # Instalar numpy primero (requerido por otros paquetes)
 RUN pip install --no-cache-dir numpy
 
-# Instalar dlib con paciencia (puede tardar 5-10 minutos)
-RUN pip install --no-cache-dir dlib
+# Instalar dlib con verbose para ver errores (puede tardar 8-10 minutos)
+RUN pip install --no-cache-dir -v dlib
 
 # Instalar el resto de dependencias
 RUN pip install --no-cache-dir -r requirements.txt

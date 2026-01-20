@@ -1,20 +1,34 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../services/api'
 import { API_CONFIG } from '../config'
+import BiometricLoginAdvanced from '../components/BiometricLoginAdvanced'
 import '../styles/Auth.css'
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showBiometric, setShowBiometric] = useState(false)
   const { saveAuth } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    // Mostrar mensaje de éxito del registro si existe
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message)
+      // Limpiar el mensaje después de 5 segundos
+      setTimeout(() => setSuccessMessage(''), 5000)
+    }
+  }, [location])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
     setLoading(true)
 
     try {
@@ -49,6 +63,7 @@ export default function Login() {
             <p className="auth-subtitle">Sign in to continue your journey</p>
           </div>
 
+          {successMessage && <div className="alert alert-success">{successMessage}</div>}
           {error && <div className="alert alert-error">{error}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
@@ -90,6 +105,21 @@ export default function Login() {
             <span>or</span>
           </div>
 
+          <button 
+            type="button"
+            className="btn btn-secondary btn-block"
+            onClick={() => setShowBiometric(true)}
+            style={{ 
+              marginBottom: '1rem',
+              background: 'linear-gradient(135deg, #47F59A, #39C070)',
+              color: '#101110',
+              border: 'none',
+              fontWeight: '600'
+            }}
+          >
+            🔐 Sign In with Face Recognition
+          </button>
+
           <div className="auth-footer">
             <p className="auth-footer-text">Don't have an account?</p>
             <Link to="/register" className="auth-link">Create Account</Link>
@@ -104,6 +134,30 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Modal Biométrico */}
+      {showBiometric && (
+        <div className="biometric-modal-overlay" onClick={() => setShowBiometric(false)}>
+          <div className="biometric-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="biometric-modal-close"
+              onClick={() => setShowBiometric(false)}
+            >
+              ✕
+            </button>
+            <BiometricLoginAdvanced
+              onSuccess={(data) => {
+                saveAuth(data.token, data.user)
+                navigate('/dashboard')
+              }}
+              onError={(error) => {
+                setError(error)
+                setShowBiometric(false)
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
