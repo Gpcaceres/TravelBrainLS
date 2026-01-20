@@ -1,0 +1,835 @@
+/* Itineraries Page */
+.itineraries-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+/* Navbar Styles */
+.itineraries-navbar {
+  background: #1e1e1e;
+  padding: 1rem 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(71, 245, 154, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.itineraries-navbar .navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.itineraries-navbar .navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.itineraries-navbar .navbar-logo {
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 2px 8px rgba(71, 245, 154, 0.3));
+  object-fit: contain;
+}
+
+.itineraries-navbar .navbar-brand {
+  color: #47F59A;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.itineraries-navbar .navbar-center {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.itineraries-navbar .nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.itineraries-navbar .nav-link:hover {
+  background: rgba(71, 245, 154, 0.1);
+  color: #47F59A;
+}
+
+.itineraries-navbar .nav-link.active {
+  background: rgba(71, 245, 154, 0.1);
+  color: #47F59A;
+}
+
+.itineraries-navbar .navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.itineraries-navbar .user-menu {
+  position: relative;
+}
+
+.itineraries-navbar .user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #ffffff;
+}
+
+.itineraries-navbar .user-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(71, 245, 154, 0.3);
+}
+
+.itineraries-navbar .user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #47F59A 0%, #2ecc71 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 0.9rem;
+}
+
+.itineraries-navbar .user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.itineraries-navbar .dropdown-arrow {
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+.itineraries-navbar .dropdown-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.itineraries-navbar .user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: #2d2d2d;
+  border: 1px solid rgba(71, 245, 154, 0.2);
+  border-radius: 0.75rem;
+  min-width: 250px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.itineraries-navbar .dropdown-header {
+  padding: 1rem;
+  background: rgba(71, 245, 154, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.itineraries-navbar .dropdown-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.itineraries-navbar .dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #47F59A 0%, #2ecc71 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 1rem;
+}
+
+.itineraries-navbar .dropdown-name {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.itineraries-navbar .dropdown-email {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.itineraries-navbar .dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 0.5rem 0;
+}
+
+.itineraries-navbar .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.itineraries-navbar .dropdown-item:hover {
+  background: rgba(71, 245, 154, 0.1);
+  color: #47F59A;
+}
+
+.dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.logout-item {
+  color: #E54A7A;
+}
+
+.logout-item:hover {
+  background: rgba(229, 74, 122, 0.1);
+  color: #E54A7A;
+}
+
+/* Main Container */
+.itineraries-container {
+  padding: 3rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.itineraries-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.itineraries-header h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+}
+
+.itineraries-header p {
+  font-size: 1.05rem;
+  color: #a0a0a0;
+  margin: 0;
+}
+
+/* Form Styles */
+.itinerary-form {
+  background: #2d2d2d;
+  border: 1px solid rgba(71, 245, 154, 0.1);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #47F59A;
+  box-shadow: 0 0 0 3px rgba(71, 245, 154, 0.1);
+}
+
+/* Trip Details */
+.trip-details {
+  background: rgba(71, 245, 154, 0.05);
+  border: 1px solid rgba(71, 245, 154, 0.2);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.trip-details h3 {
+  color: #47F59A;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.trip-info p {
+  margin: 0.5rem 0;
+  color: #a0a0a0;
+  line-height: 1.6;
+}
+
+.trip-info strong {
+  color: #ffffff;
+}
+
+/* Interest Types */
+.interest-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.interest-btn {
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #a0a0a0;
+}
+
+.interest-btn:hover {
+  border-color: rgba(71, 245, 154, 0.5);
+  background: rgba(71, 245, 154, 0.1);
+  color: #47F59A;
+}
+
+.interest-btn.active {
+  border-color: #47F59A;
+  background: rgba(71, 245, 154, 0.15);
+  color: #47F59A;
+  box-shadow: 0 0 20px rgba(71, 245, 154, 0.2);
+}
+
+/* Generate Button */
+.generate-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #47F59A;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: #2ecc71;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(71, 245, 154, 0.3);
+}
+
+.generate-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.error-message {
+  background: rgba(229, 74, 122, 0.1);
+  border: 1px solid #E54A7A;
+  color: #E54A7A;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Itinerary Result */
+.itinerary-result {
+  background: #2d2d2d;
+  border: 1px solid rgba(71, 245, 154, 0.2);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.itinerary-header-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(71, 245, 154, 0.3);
+}
+
+.itinerary-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 2rem;
+}
+
+.itinerary-title-row > div {
+  flex: 1;
+  text-align: center;
+}
+
+.download-pdf-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #47F59A 0%, #2ecc71 100%);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(71, 245, 154, 0.3);
+  white-space: nowrap;
+}
+
+.download-pdf-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(71, 245, 154, 0.4);
+  background: linear-gradient(135deg, #2ecc71 0%, #47F59A 100%);
+}
+
+.download-pdf-btn:active {
+  transform: translateY(0);
+}
+
+.download-pdf-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.itinerary-header-section h2 {
+  font-size: 2rem;
+  color: #47F59A;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.itinerary-header-section h3 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.itinerary-meta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.badge {
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.badge-interest {
+  background: rgba(71, 245, 154, 0.15);
+  color: #47F59A;
+  border: 1px solid rgba(71, 245, 154, 0.3);
+}
+
+.badge-budget {
+  background: rgba(229, 74, 122, 0.15);
+  color: #E54A7A;
+  border: 1px solid rgba(229, 74, 122, 0.3);
+}
+
+.badge-weather {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-weather svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Daily Activities */
+.itinerary-details {
+  margin-bottom: 2rem;
+}
+
+.itinerary-details h4 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.day-section {
+  background: rgba(71, 245, 154, 0.05);
+  border: 1px solid rgba(71, 245, 154, 0.2);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #47F59A;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.day-title h5 {
+  color: #47F59A;
+  font-size: 1.2rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.day-weather {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(30, 58, 138, 0.2);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(71, 245, 154, 0.1);
+}
+
+.day-weather .weather-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.day-weather .weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.day-weather .weather-temp {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #47F59A;
+}
+
+.day-weather .weather-condition {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+}
+
+.day-weather .weather-rain {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #60a5fa;
+}
+
+.day-weather .weather-rain svg {
+  width: 12px;
+  height: 12px;
+}
+
+.day-section h5 {
+  color: #47F59A;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.activities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 3px solid #47F59A;
+  transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+  background: rgba(71, 245, 154, 0.05);
+  transform: translateX(4px);
+}
+
+.activity-time {
+  font-weight: 700;
+  color: #47F59A;
+  font-size: 1rem;
+  min-width: 60px;
+  margin-right: 1rem;
+}
+
+.activity-details {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.activity-title {
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.activity-cost {
+  font-weight: 700;
+  color: #47F59A;
+  font-size: 1rem;
+}
+
+/* Weather Section */
+.weather-section {
+  background: rgba(30, 58, 138, 0.2);
+  border: 1px solid rgba(71, 245, 154, 0.2);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.weather-section h4 {
+  color: #47F59A;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.weather-summary {
+  margin-bottom: 1rem;
+}
+
+.weather-summary p {
+  margin: 0.5rem 0;
+  color: #a0a0a0;
+}
+
+.weather-summary strong {
+  color: #ffffff;
+}
+
+.daily-forecasts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.forecast-item {
+  background: #1e1e1e;
+  border: 1px solid rgba(71, 245, 154, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.forecast-item:hover {
+  border-color: rgba(71, 245, 154, 0.3);
+  background: rgba(71, 245, 154, 0.05);
+}
+
+.forecast-date {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  margin-bottom: 0.5rem;
+}
+
+.forecast-temp {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #47F59A;
+  margin: 0.5rem 0;
+}
+
+.forecast-condition {
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+/* Budget Section */
+.budget-section {
+  background: rgba(229, 74, 122, 0.1);
+  border: 1px solid rgba(229, 74, 122, 0.2);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.budget-section h4 {
+  color: #E54A7A;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.budget-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.budget-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.budget-item:hover {
+  background: rgba(229, 74, 122, 0.05);
+  border-color: rgba(229, 74, 122, 0.2);
+}
+
+.budget-item span:first-child {
+  color: #a0a0a0;
+}
+
+.budget-item span:last-child {
+  color: #47F59A;
+  font-weight: 600;
+}
+
+.budget-total {
+  border-top: 2px solid #E54A7A;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  background: rgba(229, 74, 122, 0.1) !important;
+}
+
+.budget-total span {
+  color: #ffffff;
+}
+
+.budget-total span:last-child {
+  color: #47F59A;
+  font-size: 1.2rem;
+}
+
+/* Actions */
+.itinerary-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(71, 245, 154, 0.2);
+}
+
+.download-btn {
+  padding: 1rem 2rem;
+  background: #47F59A;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.download-btn:hover {
+  background: #2ecc71;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(71, 245, 154, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .itineraries-container {
+    padding: 1rem;
+  }
+
+  .itineraries-header h1 {
+    font-size: 2rem;
+  }
+
+  .interest-types {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .activity-time {
+    margin-right: 0;
+  }
+
+  .daily-forecasts {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+}

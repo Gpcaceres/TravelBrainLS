@@ -231,6 +231,7 @@ function Admin() {
           <div className="navbar-center">
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/trips" className="nav-link">My Trips</Link>
+            <Link to="/itineraries" className="nav-link">Itineraries</Link>
             <Link to="/destinations" className="nav-link">Destinations</Link>
             <Link to="/weather" className="nav-link">Weather</Link>
           </div>

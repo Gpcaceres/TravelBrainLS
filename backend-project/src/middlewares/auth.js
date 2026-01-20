@@ -7,25 +7,36 @@ const config = require('../config/env');
  */
 exports.authenticate = async (req, res, next) => {
   try {
+    const authHeader = req.headers.authorization;
+    console.log('[Auth Middleware] Authorization header:', authHeader ? authHeader.substring(0, 30) + '...' : 'NO HEADER');
+    
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
+      console.log('[Auth Middleware] ❌ No token provided');
       return res.status(401).json({
         success: false,
         message: 'Token de autenticación requerido'
       });
     }
 
+    console.log('[Auth Middleware] Token recibido (primeros 20 chars):', token.substring(0, 20) + '...');
+
     // Verify token
     const decoded = jwt.verify(token, config.jwtSecret);
+    console.log('[Auth Middleware] Token decodificado - userId:', decoded.userId);
+    
     const user = await User.findById(decoded.userId);
 
     if (!user) {
+      console.log('[Auth Middleware] ❌ Usuario no encontrado para userId:', decoded.userId);
       return res.status(401).json({
         success: false,
         message: 'Usuario no encontrado'
       });
     }
+
+    console.log('[Auth Middleware] ✅ Usuario autenticado:', user.email);
 
     // Check if user is active
     if (user.status !== 'ACTIVE') {
@@ -47,7 +58,7 @@ exports.authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error en autenticación:', error);
+    console.error('[Auth Middleware] ❌ Error en autenticación:', error.message);
     
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({

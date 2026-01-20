@@ -147,7 +147,11 @@ export default function Login() {
             </button>
             <BiometricLoginAdvanced
               onSuccess={(data) => {
+                console.log('[Login] Biometric success data:', data)
+                console.log('[Login] Token:', data.token)
+                console.log('[Login] User:', data.user)
                 saveAuth(data.token, data.user)
+                console.log('[Login] Auth guardado, navegando a dashboard')
                 navigate('/dashboard')
               }}
               onError={(error) => {

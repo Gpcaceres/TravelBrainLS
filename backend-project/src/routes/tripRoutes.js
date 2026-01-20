@@ -1,24 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController');
+const { authenticate } = require('../middlewares/auth');
 
 /**
  * Trip Routes
+ * Todas las rutas requieren autenticación
  */
 
 // GET /trips - Get all trips
-router.get('/trips', tripController.getAllTrips);
+router.get('/trips', authenticate, tripController.getAllTrips);
 
 // GET /trips/:id - Get trip by ID
-router.get('/trips/:id', tripController.getTripById);
+router.get('/trips/:id', authenticate, tripController.getTripById);
 
 // POST /trips - Create new trip
-router.post('/trips', tripController.createTrip);
+router.post('/trips', authenticate, tripController.createTrip);
 
 // PUT /trips/:id - Update trip by ID
-router.put('/trips/:id', tripController.updateTrip);
+router.put('/trips/:id', authenticate, tripController.updateTrip);
 
 // DELETE /trips/:id - Delete trip by ID
-router.delete('/trips/:id', tripController.deleteTrip);
+router.delete('/trips/:id', authenticate, tripController.deleteTrip);
 
 module.exports = router;

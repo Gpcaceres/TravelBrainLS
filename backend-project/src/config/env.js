@@ -15,6 +15,7 @@ const config = {
   
   // API Keys
   openWeatherApiKey: process.env.OPENWEATHER_API_KEY || '51355211649b0894257fe06250faa40d',
+  weatherApiKey: process.env.WEATHER_API_KEY || 'a0bddd68132a4227b3b10907261401',
   mapboxToken: process.env.MAPBOX_TOKEN || 'pk.eyJ1Ijoic3JqY2JtIiwiYSI6ImNtZ3g0eGV5NDAwZzYya3BvdmFveWU2dnEifQ.yYCrLmlo9lW-AJf56akVCw',
   
   // Google OAuth

@@ -12,8 +12,11 @@ export const useAuth = () => {
   }
 
   const saveAuth = (token, user) => {
+    console.log('[useAuth] Guardando autenticación - Token:', token ? 'presente' : 'FALTA')
+    console.log('[useAuth] Guardando autenticación - User:', user)
     localStorage.setItem(STORAGE_KEYS.TOKEN, token)
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
+    console.log('[useAuth] Token guardado en localStorage:', localStorage.getItem(STORAGE_KEYS.TOKEN) ? 'OK' : 'FALLÓ')
   }
 
   const logout = () => {

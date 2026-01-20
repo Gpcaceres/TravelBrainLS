@@ -22,7 +22,7 @@ export const API_CONFIG = {
     FAVORITE_ROUTES: '/favorite-routes',
     FAVORITE_ROUTE_BY_ID: (id) => `/favorite-routes/${id}`,
     
-    // Weather
+    // Weather (montado en / en el backend, no en /api)
     WEATHERS: '/weathers',
     WEATHER_BY_ID: (id) => `/weathers/${id}`,
     WEATHER_SEARCH: '/weather'

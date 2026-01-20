@@ -6,12 +6,12 @@ const Trip = require('../models/Trip');
  */
 exports.getAllTrips = async (req, res) => {
   try {
-    console.log('Fetching all trips...');
-    const trips = await Trip.find();
-    console.log(`Found ${trips.length} trip records`);
+    console.log('[GetAllTrips] User ID:', req.user.id);
+    const trips = await Trip.find({ userId: req.user.id });
+    console.log(`[GetAllTrips] Found ${trips.length} trip records for user`);
     res.json(trips);
   } catch (error) {
-    console.error('Error fetching trips:', error);
+    console.error('[GetAllTrips] Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -39,8 +39,11 @@ exports.getTripById = async (req, res) => {
  */
 exports.createTrip = async (req, res) => {
   try {
+    console.log('[CreateTrip] User from middleware:', req.user);
+    console.log('[CreateTrip] Request body:', req.body);
+    
     const trip = new Trip({
-      userId: req.body.userId,
+      userId: req.user.id, // Usar el userId del usuario autenticado
       title: req.body.title,
       destination: req.body.destination,
       startDate: req.body.startDate,
@@ -50,9 +53,10 @@ exports.createTrip = async (req, res) => {
     });
 
     const savedTrip = await trip.save();
+    console.log('[CreateTrip] ✅ Trip created:', savedTrip._id);
     res.status(201).json(savedTrip);
   } catch (error) {
-    console.error('Error creating trip:', error);
+    console.error('[CreateTrip] ❌ Error creating trip:', error);
     res.status(500).json({ message: error.message });
   }
 };

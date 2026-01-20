@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { weatherService } from '../services/weatherService'
 import { API_KEYS, API_ENDPOINTS } from '../config/apiKeys'
+import LocationAutocomplete from '../components/LocationAutocomplete'
 import '../styles/Weather.css'
 
 export default function Weather() {
@@ -14,13 +15,9 @@ export default function Weather() {
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [savedSearches, setSavedSearches] = useState([])
-  const [loadingSearches, setLoadingSearches] = useState(true)
+  const [loadingSearches, setLoadingSearches] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
-  const [suggestions, setSuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const searchTimeoutRef = useRef(null)
-  const suggestionsRef = useRef(null)
 
   // Update user state when auth changes
   useEffect(() => {
@@ -30,26 +27,21 @@ export default function Weather() {
     }
   }, [])
 
-  // Load saved searches when component mounts or user changes
+  // Load saved searches when component mounts
   useEffect(() => {
-    if (user && user._id) {
-      loadSavedSearches()
-    }
-  }, [user?._id])
+    loadSavedSearches()
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showMenu && !e.target.closest('.user-menu')) {
         setShowMenu(false)
       }
-      if (showSuggestions && suggestionsRef.current && !suggestionsRef.current.contains(e.target) && !e.target.closest('.weather-search-input')) {
-        setShowSuggestions(false)
-      }
     }
 
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [showMenu, showSuggestions])
+  }, [showMenu])
 
   const handleLogout = () => {
     setShowMenu(false)
@@ -75,53 +67,6 @@ export default function Weather() {
     } finally {
       setLoadingSearches(false)
     }
-  }
-
-  const searchSuggestions = async (query) => {
-    if (!query || query.trim().length < 2) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
-    }
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
-      )
-      const data = await response.json()
-      const formattedSuggestions = data.map(item => ({
-        display_name: item.display_name,
-        name: item.name || item.display_name.split(',')[0],
-        lat: item.lat,
-        lon: item.lon
-      }))
-      setSuggestions(formattedSuggestions)
-      setShowSuggestions(formattedSuggestions.length > 0)
-    } catch (error) {
-      console.error('Error fetching suggestions:', error)
-      setSuggestions([])
-    }
-  }
-
-  const handleSearchInputChange = (e) => {
-    const value = e.target.value
-    setSearchQuery(value)
-
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-
-    // Set new timeout for debouncing
-    searchTimeoutRef.current = setTimeout(() => {
-      searchSuggestions(value)
-    }, 500)
-  }
-
-  const selectSuggestion = (suggestion) => {
-    setSearchQuery(suggestion.name)
-    setShowSuggestions(false)
-    setSuggestions([])
   }
 
   const searchWeather = async (e) => {
@@ -181,8 +126,6 @@ export default function Weather() {
       
       // Clear the search query after successful search
       setSearchQuery('')
-      setSuggestions([])
-      setShowSuggestions(false)
       
     } catch (error) {
       setError(error.message || 'Failed to fetch weather data')
@@ -240,6 +183,7 @@ export default function Weather() {
           <div className="navbar-center">
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/trips" className="nav-link">My Trips</Link>
+            <Link to="/itineraries" className="nav-link">Itineraries</Link>
             <Link to="/destinations" className="nav-link">Destinations</Link>
             <Link to="/weather" className="nav-link active">Weather</Link>
           </div>
@@ -339,13 +283,12 @@ export default function Weather() {
               <svg className="search-icon" width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.1zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/>
               </svg>
-              <input
-                type="text"
-                className="weather-search-input"
-                placeholder="Enter city name (e.g., London, New York, Tokyo)"
+              <LocationAutocomplete
+                name="searchQuery"
                 value={searchQuery}
-                onChange={handleSearchInputChange}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Enter city name (e.g., London, New York, Tokyo)"
+                className="weather-search-autocomplete"
               />
               <button type="submit" className="search-btn" disabled={loading}>
                 {loading ? (
@@ -354,24 +297,6 @@ export default function Weather() {
                   'Search'
                 )}
               </button>
-              
-              {/* Suggestions Dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="suggestions-dropdown" ref={suggestionsRef}>
-                  {suggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      className="suggestion-item"
-                      onClick={() => selectSuggestion(suggestion)}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 16s6-5.686 6-10A6 6 0 002 6c0 4.314 6 10 6 10zm0-7a3 3 0 110-6 3 3 0 010 6z"/>
-                      </svg>
-                      <span className="suggestion-text">{suggestion.display_name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </form>
 

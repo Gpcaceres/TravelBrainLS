@@ -15,7 +15,8 @@ const {
   tripRoutes,
   favoriteRouteRoutes,
   weatherRoutes,
-  biometricRoutes
+  biometricRoutes,
+  itineraryRoutes
 } = require('./routes');
 
 /**
@@ -52,6 +53,7 @@ const createApp = () => {
   // ===== API Routes =====
   app.use('/api/auth', authRoutes);
   app.use('/api/biometric', biometricRoutes);
+  app.use('/api/itineraries', itineraryRoutes);
   app.use('/', userRoutes);
   app.use('/', destinationRoutes);
   app.use('/', tripRoutes);

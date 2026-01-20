@@ -459,7 +459,7 @@ const verifyBiometric = async (req, res) => {
     // Generar JWT token
     const token = jwt.sign(
       { 
-        id: user._id, 
+        userId: user._id,  // Cambiado de "id" a "userId" para consistencia con middleware
         email: user.email,
         role: user.role,
         authMethod: 'biometric'

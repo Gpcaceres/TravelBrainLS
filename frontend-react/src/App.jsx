@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Trips from './pages/Trips'
+import Itineraries from './pages/Itineraries'
 import Destinations from './pages/Destinations'
 import Weather from './pages/Weather'
 import Admin from './pages/Admin'
@@ -38,6 +39,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Trips />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/itineraries" 
+        element={
+          <ProtectedRoute>
+            <Itineraries />
           </ProtectedRoute>
         } 
       />

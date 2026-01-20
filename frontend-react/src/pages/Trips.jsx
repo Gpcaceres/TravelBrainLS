@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { tripService } from '../services/tripService'
+import LocationAutocomplete from '../components/LocationAutocomplete'
 import '../styles/Trips.css'
 
 export default function Trips() {
@@ -41,12 +42,9 @@ export default function Trips() {
   const loadTrips = async () => {
     try {
       setLoading(true)
-      const allTrips = await tripService.getAllTrips()
-      const currentUser = user || getUser()
-      if (currentUser && currentUser._id) {
-        const userTrips = allTrips.filter(trip => trip.userId === currentUser._id)
-        setTrips(userTrips)
-      }
+      const data = await tripService.getAllTrips()
+      // El backend ya filtra por usuario autenticado
+      setTrips(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error loading trips:', error)
       setMessage({ type: 'error', text: 'Failed to load trips' })
@@ -177,6 +175,7 @@ export default function Trips() {
           <div className="navbar-center">
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/trips" className="nav-link active">My Trips</Link>
+            <Link to="/itineraries" className="nav-link">Itineraries</Link>
             <Link to="/destinations" className="nav-link">Destinations</Link>
             <Link to="/weather" className="nav-link">Weather</Link>
           </div>
@@ -386,8 +385,7 @@ export default function Trips() {
 
               <div className="form-group">
                 <label htmlFor="destination">Destination *</label>
-                <input
-                  type="text"
+                <LocationAutocomplete
                   id="destination"
                   name="destination"
                   value={formData.destination}
