@@ -4,7 +4,7 @@ FROM python:3.10-slim
 # Configurar variables de entorno para compilación
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar dependencias del sistema para dlib y OpenCV
+# Instalar dependencias mínimas necesarias para dlib y OpenCV
 RUN apt-get update && apt-get install -y \
     cmake \
     build-essential \
@@ -12,28 +12,10 @@ RUN apt-get update && apt-get install -y \
     libopenblas-dev \
     liblapack-dev \
     libx11-dev \
-    libgtk-3-dev \
     libboost-all-dev \
-    libavcodec-dev \
-    libavformat-dev \
-    libswscale-dev \
-    libv4l-dev \
-    libxvidcore-dev \
-    libx264-dev \
     libjpeg-dev \
     libpng-dev \
-    libtiff-dev \
-    gfortran \
-    openexr \
-    libatlas-base-dev \
     python3-dev \
-    python3-numpy \
-    libtbb2 \
-    libtbb-dev \
-    libdc1394-dev \
-    libopenexr-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer1.0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de trabajo
