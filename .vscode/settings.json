@@ -1,0 +1,6 @@
+{
+  "rest-client.proxy": "http://127.0.0.1:8080",
+  "rest-client.proxyStrictSSL": false,
+  "rest-client.followRedirect": true,
+  "rest-client.timeoutinmilliseconds": 30000
+}

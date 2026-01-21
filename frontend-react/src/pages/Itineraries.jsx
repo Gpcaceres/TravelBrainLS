@@ -123,7 +123,7 @@ const Itineraries = () => {
     let yPos = 20;
 
     // Colors
-    const primaryColor = [71, 245, 154]; // #47F59A
+    const primaryColor = [17, 175, 47]; // #11AF2F
     const darkBg = [26, 26, 26];
     const lightText = [160, 160, 160];
     const whiteText = [255, 255, 255];
@@ -169,9 +169,7 @@ const Itineraries = () => {
     // ========== USER INFORMATION ==========
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(71, 245, 154);
-    doc.text('Información del Usuario', 15, yPos);
-    
+      doc.setTextColor(17, 175, 47);
     yPos += 7;
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -187,7 +185,7 @@ const Itineraries = () => {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(71, 245, 154);
       doc.text('Pronóstico del Clima', 15, yPos);
-      
+      17, 175, 47
       yPos += 7;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
@@ -202,7 +200,7 @@ const Itineraries = () => {
     if (itinerary.budgetBreakdown) {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(71, 245, 154);
+      doc.setTextColor(17, 175, 47);
       doc.text('Desglose de Presupuesto', 15, yPos);
       
       yPos += 5;
@@ -223,8 +221,8 @@ const Itineraries = () => {
         body: budgetData.slice(1),
         theme: 'grid',
         headStyles: { 
-          fillColor: [71, 245, 154], 
-          textColor: [26, 26, 26],
+          fillColor: [17, 175, 47], 
+          textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 10
         },
@@ -251,7 +249,7 @@ const Itineraries = () => {
     // ========== DAILY ITINERARY ==========
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(71, 245, 154);
+    doc.setTextColor(17, 175, 47);
     
     // Check if we need a new page
     if (yPos > pageHeight - 40) {
@@ -271,7 +269,7 @@ const Itineraries = () => {
       }
 
       // Day header with weather
-      doc.setFillColor(71, 245, 154);
+      doc.setFillColor(17, 175, 47);
       doc.rect(15, yPos - 5, pageWidth - 30, 10, 'F');
       
       doc.setTextColor(26, 26, 26);

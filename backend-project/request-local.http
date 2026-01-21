@@ -1,0 +1,786 @@
+# TravelBrain Backend API - HTTP Requests (LOCAL)
+# REST Client extension for VS Code
+# Use ### to separate requests
+
+# Proxy Configuration for Burp Suite
+@proxy = http://127.0.0.1:8080
+
+# Variables
+@baseUrl = http://127.0.0.1:4000
+@contentType = application/json
+@token = 
+@adminToken =
+@userToken =
+
+### ====================================
+### HEALTH CHECK
+### ====================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root Endpoint - API Info
+GET {{baseUrl}}/
+
+### ====================================
+### AUTHENTICATION
+### ====================================
+
+### Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "venao@test.com"
+}
+
+### Login - Admin User
+# @name loginAdmin
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@travelbrainls.com"
+}
+
+### Login - Regular User
+# @name loginUser
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@travelbrainls.com"
+}
+
+### Extract token from login response
+@token = {{login.response.body.token}}
+@adminToken = {{loginAdmin.response.body.token}}
+@userToken = {{loginUser.response.body.token}}
+
+### Verify JWT Token (Uses saved token)
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{token}}
+
+### Verify Admin Token
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{adminToken}}
+
+### Verify User Token
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{userToken}}
+
+### ====================================
+### BIOMETRIC AUTHENTICATION
+### ====================================
+
+### Register Biometric Data
+# @name registerBiometric
+POST {{baseUrl}}/api/biometric/register
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "faceDescriptor": [0.1, 0.2, 0.3, 0.4, 0.5],
+  "metadata": {
+    "device": "webcam",
+    "quality": "high"
+  }
+}
+
+### Authenticate with Biometric
+# @name biometricAuth
+POST {{baseUrl}}/api/biometric/authenticate
+Content-Type: {{contentType}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "faceDescriptor": [0.1, 0.2, 0.3, 0.4, 0.5]
+}
+
+### Create Biometric Challenge
+# @name createChallenge
+POST {{baseUrl}}/api/biometric/challenge
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352"
+}
+
+### Verify Biometric Challenge
+POST {{baseUrl}}/api/biometric/verify-challenge
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "challengeId": "challenge123",
+  "faceDescriptor": [0.1, 0.2, 0.3, 0.4, 0.5]
+}
+
+### Get Biometric Audit Logs
+GET {{baseUrl}}/api/biometric/audit-logs
+Authorization: Bearer {{adminToken}}
+
+### Get User's Biometric Data
+GET {{baseUrl}}/api/biometric/user/6906c23f09f5be376204c352
+Authorization: Bearer {{token}}
+
+### Delete Biometric Data
+DELETE {{baseUrl}}/api/biometric/user/6906c23f09f5be376204c352
+Authorization: Bearer {{token}}
+
+### ====================================
+### USERS
+### ====================================
+
+### Get All Users (requires auth)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Get User by ID
+# @name getUser
+GET {{baseUrl}}/users/6906c23f09f5be376204c352
+Authorization: Bearer {{token}}
+
+### Create New User
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+
+{
+  "username": "johndoe",
+  "email": "john.doe@example.com",
+  "passwordHash": "$2a$10$abcdefghijklmnopqrstuvwxyz",
+  "name": "John Doe",
+  "role": "USER",
+  "status": "ACTIVE",
+  "tz": "America/Guayaquil"
+}
+
+### Create Admin User
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "username": "adminuser",
+  "email": "admin2@travelbrainls.com",
+  "passwordHash": "$2a$10$abcdefghijklmnopqrstuvwxyz",
+  "name": "Admin User 2",
+  "role": "ADMIN",
+  "status": "ACTIVE",
+  "tz": "America/Guayaquil"
+}
+
+### Update User
+PUT {{baseUrl}}/users/677e5d8a9c5b1a2b3c4d5e6f
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "John Doe Updated",
+  "status": "ACTIVE"
+}
+
+### Update User Profile (Self)
+PUT {{baseUrl}}/users/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Name",
+  "tz": "America/New_York"
+}
+
+### Delete User (Admin only)
+DELETE {{baseUrl}}/users/677e5d8a9c5b1a2b3c4d5e6f
+Authorization: Bearer {{adminToken}}
+
+### ====================================
+### DESTINATIONS
+### ====================================
+
+### Get All Destinations
+GET {{baseUrl}}/destinations
+Authorization: Bearer {{token}}
+
+### Get Destination by ID
+GET {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+Authorization: Bearer {{token}}
+
+### Create New Destination
+# @name createDestination
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Quito",
+  "country": "Ecuador",
+  "description": "Capital city of Ecuador, located in the Andean highlands",
+  "lat": -0.1807,
+  "lng": -78.4678,
+  "img": "https://example.com/quito.jpg",
+  "userId": "user123"
+}
+
+### Create Destination - Galápagos Islands
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Galápagos Islands",
+  "country": "Ecuador",
+  "description": "Volcanic archipelago in the Pacific Ocean, famous for unique wildlife",
+  "lat": -0.9538,
+  "lng": -90.9656,
+  "img": "https://example.com/galapagos.jpg",
+  "userId": "user123"
+}
+
+### Create Destination - Cuenca
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Cuenca",
+  "country": "Ecuador",
+  "description": "UNESCO World Heritage city known for colonial architecture",
+  "lat": -2.9001,
+  "lng": -79.0059,
+  "img": "https://example.com/cuenca.jpg",
+  "userId": "user123"
+}
+
+### Update Destination
+PUT {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "description": "Updated description for this amazing destination",
+  "img": "https://example.com/updated-image.jpg"
+}
+
+### Delete Destination
+DELETE {{baseUrl}}/destinations/677e5d8a9c5b1a2b3c4d5e70
+Authorization: Bearer {{token}}
+
+### ====================================
+### TRIPS
+### ====================================
+
+### Get All Trips
+GET {{baseUrl}}/trips
+Authorization: Bearer {{token}}
+
+### Get Trips by User ID
+GET {{baseUrl}}/trips/user/6906c23f09f5be376204c352
+Authorization: Bearer {{token}}
+
+### Get Trip by ID
+GET {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+Authorization: Bearer {{token}}
+
+### Create New Trip
+# @name createTrip
+POST {{baseUrl}}/trips
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "title": "Ecuador Adventure 2026",
+  "destination": "Quito and Galápagos",
+  "startDate": "2026-03-15T00:00:00.000Z",
+  "endDate": "2026-03-25T00:00:00.000Z",
+  "budget": 2500,
+  "description": "10-day trip exploring Quito's colonial center and the unique wildlife of the Galápagos Islands"
+}
+
+### Create Trip - Beach Vacation
+POST {{baseUrl}}/trips
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "title": "Coastal Paradise",
+  "destination": "Montañita Beach",
+  "startDate": "2026-06-01T00:00:00.000Z",
+  "endDate": "2026-06-07T00:00:00.000Z",
+  "budget": 800,
+  "description": "Week-long beach vacation with surfing and relaxation"
+}
+
+### Update Trip
+PUT {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "budget": 3000,
+  "description": "Updated trip description with extended itinerary"
+}
+
+### Delete Trip
+DELETE {{baseUrl}}/trips/677e5d8a9c5b1a2b3c4d5e71
+Authorization: Bearer {{token}}
+
+### ====================================
+### ITINERARIES
+### ====================================
+
+### Get All Itineraries
+GET {{baseUrl}}/api/itineraries
+Authorization: Bearer {{token}}
+
+### Get Itinerary by ID
+GET {{baseUrl}}/api/itineraries/677e5d8a9c5b1a2b3c4d5e74
+Authorization: Bearer {{token}}
+
+### Get Itineraries by Trip
+GET {{baseUrl}}/api/itineraries/trip/677e5d8a9c5b1a2b3c4d5e71
+Authorization: Bearer {{token}}
+
+### Create New Itinerary
+# @name createItinerary
+POST {{baseUrl}}/api/itineraries
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "tripId": "677e5d8a9c5b1a2b3c4d5e71",
+  "day": 1,
+  "title": "Arrival in Quito",
+  "activities": [
+    {
+      "time": "10:00",
+      "description": "Arrive at Mariscal Sucre International Airport",
+      "location": "Quito Airport"
+    },
+    {
+      "time": "14:00",
+      "description": "Check-in at hotel",
+      "location": "Historic Center"
+    },
+    {
+      "time": "16:00",
+      "description": "Walking tour of Plaza Grande",
+      "location": "Plaza de la Independencia"
+    }
+  ],
+  "notes": "Take it easy on first day due to altitude"
+}
+
+### Update Itinerary
+PUT {{baseUrl}}/api/itineraries/677e5d8a9c5b1a2b3c4d5e74
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated Day 1 - Arrival in Quito",
+  "notes": "Remember to bring altitude sickness medication"
+}
+
+### Delete Itinerary
+DELETE {{baseUrl}}/api/itineraries/677e5d8a9c5b1a2b3c4d5e74
+Authorization: Bearer {{token}}
+
+### ====================================
+### FAVORITE ROUTES
+### ====================================
+
+### Get All Favorite Routes
+GET {{baseUrl}}/favorite-routes
+Authorization: Bearer {{token}}
+
+### Get Favorite Route by ID
+GET {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+Authorization: Bearer {{token}}
+
+### Get User's Favorite Routes
+GET {{baseUrl}}/favorite-routes/user/6906c23f09f5be376204c352
+Authorization: Bearer {{token}}
+
+### Create New Favorite Route
+# @name createFavoriteRoute
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "name": "Quito to Otavalo",
+  "origin": {
+    "lat": -0.1807,
+    "lon": -78.4678,
+    "label": "Quito, Ecuador"
+  },
+  "destination": {
+    "lat": 0.2343,
+    "lon": -78.2619,
+    "label": "Otavalo, Ecuador"
+  },
+  "distanceKm": 95.5,
+  "durationSec": 5400,
+  "mode": "driving"
+}
+
+### Create Favorite Route - Cycling Route
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "name": "Quito Historic Center Tour",
+  "origin": {
+    "lat": -0.2201,
+    "lon": -78.5123,
+    "label": "Plaza Grande, Quito"
+  },
+  "destination": {
+    "lat": -0.2235,
+    "lon": -78.5117,
+    "label": "El Panecillo, Quito"
+  },
+  "distanceKm": 3.2,
+  "durationSec": 1200,
+  "mode": "cycling"
+}
+
+### Create Favorite Route - Walking Route
+POST {{baseUrl}}/favorite-routes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "6906c23f09f5be376204c352",
+  "name": "Downtown Walk",
+  "origin": {
+    "lat": -0.1807,
+    "lon": -78.4678,
+    "label": "Centro Histórico"
+  },
+  "destination": {
+    "lat": -0.1850,
+    "lon": -78.4700,
+    "label": "La Mariscal"
+  },
+  "distanceKm": 2.1,
+  "durationSec": 1500,
+  "mode": "walking"
+}
+
+### Update Favorite Route
+PUT {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Route Name",
+  "distanceKm": 100.0,
+  "durationSec": 6000
+}
+
+### Delete Favorite Route
+DELETE {{baseUrl}}/favorite-routes/677e5d8a9c5b1a2b3c4d5e72
+Authorization: Bearer {{token}}
+
+### ====================================
+### WEATHER
+### ====================================
+
+### Get All Weather Searches
+GET {{baseUrl}}/weathers
+Authorization: Bearer {{token}}
+
+### Get Weather by ID
+GET {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+Authorization: Bearer {{token}}
+
+### Get Current Weather by Location (External API)
+GET {{baseUrl}}/api/weather/current?lat=-0.1807&lon=-78.4678
+Authorization: Bearer {{token}}
+
+### Get Weather Forecast (External API)
+GET {{baseUrl}}/api/weather/forecast?lat=-0.1807&lon=-78.4678
+Authorization: Bearer {{token}}
+
+### Create New Weather Search
+# @name createWeather
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "userId": "677e5d8a9c5b1a2b3c4d5e6f",
+  "label": "Quito Weather",
+  "lat": -0.1807,
+  "lon": -78.4678,
+  "temp": 18.5,
+  "condition": "Partly Cloudy",
+  "humidity": 65,
+  "windSpeed": 12.5,
+  "pressure": 1013,
+  "precipitation": 0
+}
+
+### Create Weather - Galápagos
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "label": "Galápagos Islands Weather",
+  "lat": -0.9538,
+  "lon": -90.9656,
+  "temp": 25.0,
+  "condition": "Sunny",
+  "humidity": 75,
+  "windSpeed": 15.0,
+  "pressure": 1012,
+  "precipitation": 0
+}
+
+### Create Weather - Cuenca
+POST {{baseUrl}}/weather
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "label": "Cuenca Weather",
+  "lat": -2.9001,
+  "lon": -79.0059,
+  "temp": 16.5,
+  "condition": "Rainy",
+  "humidity": 85,
+  "windSpeed": 8.0,
+  "pressure": 1015,
+  "precipitation": 5.5
+}
+
+### Update Weather
+PUT {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "temp": 20.0,
+  "condition": "Sunny",
+  "humidity": 60
+}
+
+### Delete Weather
+DELETE {{baseUrl}}/weathers/677e5d8a9c5b1a2b3c4d5e73
+Authorization: Bearer {{token}}
+
+### ====================================
+### BATCH OPERATIONS
+### ====================================
+
+### Create Multiple Destinations at Once
+# Ecuador's Top Tourist Destinations
+
+### 1. Baños de Agua Santa
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Baños de Agua Santa",
+  "country": "Ecuador",
+  "description": "Adventure capital with waterfalls, hot springs, and outdoor activities",
+  "lat": -1.3928,
+  "lng": -78.4269,
+  "img": "https://example.com/banos.jpg",
+  "userId": "user123"
+}
+
+### 2. Mindo Cloud Forest
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Mindo Cloud Forest",
+  "country": "Ecuador",
+  "description": "Biodiversity hotspot perfect for bird watching and nature lovers",
+  "lat": -0.0462,
+  "lng": -78.7766,
+  "img": "https://example.com/mindo.jpg",
+  "userId": "user123"
+}
+
+### 3. Cotopaxi National Park
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Cotopaxi National Park",
+  "country": "Ecuador",
+  "description": "Home to one of the world's highest active volcanoes",
+  "lat": -0.6856,
+  "lng": -78.4366,
+  "img": "https://example.com/cotopaxi.jpg",
+  "userId": "user123"
+}
+
+### 4. Montañita
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Montañita",
+  "country": "Ecuador",
+  "description": "Popular surf town with vibrant nightlife and beautiful beaches",
+  "lat": -1.8275,
+  "lng": -80.7439,
+  "img": "https://example.com/montanita.jpg",
+  "userId": "user123"
+}
+
+### 5. Yasuni National Park
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Yasuni National Park",
+  "country": "Ecuador",
+  "description": "One of the most biodiverse places on Earth in the Amazon rainforest",
+  "lat": -0.6820,
+  "lng": -76.3897,
+  "img": "https://example.com/yasuni.jpg",
+  "userId": "user123"
+}
+
+### ====================================
+### TESTING & DEBUGGING
+### ====================================
+
+### Test Invalid ID Format
+GET {{baseUrl}}/users/invalid-id
+Authorization: Bearer {{token}}
+
+### Test Non-existent Resource
+GET {{baseUrl}}/users/000000000000000000000000
+Authorization: Bearer {{token}}
+
+### Test Missing Required Fields
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Test Destination"
+}
+
+### Test Invalid Coordinates
+POST {{baseUrl}}/destinations
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Invalid Location",
+  "country": "Test",
+  "lat": 200,
+  "lng": 200
+}
+
+### Test Unauthorized Access (No Token)
+GET {{baseUrl}}/users
+
+### Test Invalid Token
+GET {{baseUrl}}/users
+Authorization: Bearer invalid.token.here
+
+### Test Expired Token
+GET {{baseUrl}}/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDk0NTkyMDB9.invalid
+
+### ====================================
+### PERFORMANCE TESTING
+### ====================================
+
+### Test Cache - First Request (Cache Miss)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Test Cache - Second Request (Cache Hit - should be faster)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Test Cache - Weather (10 min cache)
+GET {{baseUrl}}/weathers
+Authorization: Bearer {{token}}
+
+### ====================================
+### FACIAL RECOGNITION SERVICE (if available)
+### ====================================
+
+### Health Check - Facial Recognition Service
+GET http://localhost:5000/health
+
+### Encode Face
+POST http://localhost:5000/encode
+Content-Type: {{contentType}}
+
+{
+  "image": "base64_encoded_image_string"
+}
+
+### Compare Faces
+POST http://localhost:5000/compare
+Content-Type: {{contentType}}
+
+{
+  "encoding1": [0.1, 0.2, 0.3],
+  "encoding2": [0.1, 0.2, 0.3],
+  "threshold": 0.6
+}
+
+### ====================================
+### NOTES & TROUBLESHOOTING
+### ====================================
+
+# How to use:
+# 1. Install "REST Client" extension in VS Code
+# 2. Make sure the backend server is running on localhost:3004
+# 3. Click "Send Request" above any ### request
+# 4. Replace placeholder IDs with actual MongoDB ObjectIds from your database
+# 5. First login to get a token, which will be automatically saved
+
+# Authentication Flow:
+# 1. Send a login request to get a token
+# 2. Token is automatically saved in @token, @adminToken, or @userToken variable
+# 3. Subsequent requests will use the saved token via Authorization header
+
+# Tips:
+# - Use @name to save response and reference in other requests
+# - Check server logs for detailed information
+# - Cache is enabled on GET /users and GET /weathers (5 min cache)
+# - All POST/PUT/DELETE operations invalidate related cache
+# - Protected endpoints require valid JWT token in Authorization header
+
+# Database Connection:
+# MongoDB: travel_brain (local)
+# Default connection: mongodb://localhost:27017/travel_brain
+
+# Services:
+# Backend API: http://localhost:3004
+# Facial Recognition: http://localhost:5000 (if running)
+# Frontend: http://localhost:5173 (if running)
+
+# Environment Variables Required:
+# - PORT=3004
+# - MONGODB_URI=mongodb://localhost:27017/travel_brain
+# - JWT_SECRET=your-secret-key
+# - OPENWEATHER_API_KEY=your-api-key (for weather features)
