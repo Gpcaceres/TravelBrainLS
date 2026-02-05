@@ -202,6 +202,45 @@ const verifyBiometric = async (req, res) => {
       });
     }
     
+    // Verificar bloqueo temporal por intentos fallidos (3 intentos)
+    if (storedBiometric.isLocked()) {
+      const remainingSeconds = storedBiometric.getRemainingLockTime();
+      const remainingMinutes = Math.ceil(remainingSeconds / 60);
+      
+      await BiometricAuditLog.logAttempt({
+        userId: user._id,
+        email,
+        operation: 'LOGIN_ATTEMPT',
+        result: 'FAILURE',
+        reason: `Cuenta bloqueada temporalmente. ${remainingMinutes} minuto(s) restantes`,
+        metrics: {
+          failedAttempts: storedBiometric.failedAttempts,
+          remainingLockSeconds: remainingSeconds
+        },
+        clientInfo: {
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        },
+        processingTime: Date.now() - startTime
+      });
+      
+      return res.status(423).json({ // 423 Locked
+        success: false,
+        message: `Demasiados intentos fallidos. Cuenta bloqueada por ${remainingMinutes} minuto(s).`,
+        lockedUntil: storedBiometric.lockedUntil,
+        remainingSeconds: remainingSeconds,
+        failedAttempts: storedBiometric.failedAttempts
+      });
+    }
+    
+    // Si el bloqueo expiró, resetear intentos fallidos
+    if (storedBiometric.lockedUntil && storedBiometric.lockedUntil < new Date()) {
+      storedBiometric.failedAttempts = 0;
+      storedBiometric.lockedUntil = null;
+      await storedBiometric.save();
+      console.log(`[Security] Bloqueo expirado para usuario ${email}. Intentos reseteados.`);
+    }
+    
     // Paso 2: Enviar imagen al microservicio Python para extracción de características
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
@@ -585,6 +624,98 @@ const registerBiometric = async (req, res) => {
         message: 'La calidad de la imagen es insuficiente. Mejore la iluminación y enfoque.'
       });
     }
+
+    // === NUEVA VALIDACIÓN: Verificar que el rostro no esté ya registrado ===
+    console.log('[BiometricRegister] Verificando unicidad del rostro...');
+    
+    try {
+      // Obtener todas las biometrías activas (excepto la del usuario actual, si existe)
+      const existingBiometrics = await FacialBiometric.find({ 
+        userId: { $ne: userId },
+        isActive: true 
+      });
+      
+      console.log(`[BiometricRegister] Comparando con ${existingBiometrics.length} rostros registrados...`);
+      
+      // Comparar con cada rostro existente
+      for (const existingBio of existingBiometrics) {
+        try {
+          // Descifrar el encoding almacenado
+          const decryptedEncoding = FacialBiometric.decryptEncoding(
+            existingBio.encryptedEncoding,
+            existingBio.iv,
+            existingBio.authTag,
+            existingBio.salt,
+            BIOMETRIC_MASTER_KEY
+          );
+          
+          // Comparar con el nuevo encoding usando el microservicio
+          const comparisonResponse = await axios.post(
+            `${FACIAL_SERVICE_URL}/compare-faces`,
+            {
+              encoding1: extractionData.encoding,
+              encoding2: decryptedEncoding,
+              threshold: 0.45  // Umbral ajustado: distancia < 0.45 = mismo rostro
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Token': INTERNAL_SERVICE_TOKEN
+              },
+              timeout: 5000
+            }
+          );
+          
+          const comparison = comparisonResponse.data;
+          
+          // Si hay match, rechazar el registro
+          if (comparison.match) {
+            console.log(`[BiometricRegister] ⚠️ Rostro duplicado detectado! Distancia: ${comparison.distance}`);
+            
+            // Log de auditoría
+            await BiometricAuditLog.logAttempt({
+              userId,
+              email,
+              operation: 'REGISTER_BIOMETRIC',
+              result: 'FAILURE',
+              reason: `Rostro ya registrado en otra cuenta (similitud: ${(comparison.confidence * 100).toFixed(1)}%)`,
+              metrics: {
+                distance: comparison.distance,
+                confidence: comparison.confidence,
+                livenessScore: extractionData.liveness_score,
+                qualityScore: extractionData.quality_score
+              },
+              clientInfo: {
+                ip: req.ip,
+                userAgent: req.headers['user-agent']
+              },
+              processingTime: Date.now() - startTime
+            });
+            
+            return res.status(409).json({
+              success: false,
+              message: '⚠️ Este rostro ya está registrado en otra cuenta. Cada persona solo puede registrar su rostro una vez.',
+              isDuplicate: true,
+              similarityScore: (comparison.confidence * 100).toFixed(1)
+            });
+          }
+          
+        } catch (decryptError) {
+          console.error('[BiometricRegister] Error al comparar con una biometría existente:', decryptError.message);
+          // Continuar con la siguiente comparación
+          continue;
+        }
+      }
+      
+      console.log('[BiometricRegister] ✅ Rostro único verificado');
+      
+    } catch (uniquenessError) {
+      console.error('[BiometricRegister] Error verificando unicidad del rostro:', uniquenessError);
+      // En caso de error en la verificación de unicidad, continuar con el registro
+      // pero loguearlo para análisis posterior
+    }
+    
+    // === FIN DE VALIDACIÓN DE UNICIDAD ===
     
     // Cifrar encoding
     const encryptedData = FacialBiometric.encryptEncoding(
@@ -709,9 +840,161 @@ const getBiometricStatus = async (req, res) => {
   }
 };
 
+/**
+ * Validar rostro sin registrar (para verificación pre-registro)
+ * 
+ * @route POST /api/biometric/validate-face
+ * @access Public
+ */
+const validateFace = async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    // Validar que se envió una imagen
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere una imagen del rostro'
+      });
+    }
+    
+    // Extraer características de la imagen
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: 'face.jpg',
+      contentType: req.file.mimetype
+    });
+    
+    let extractionResponse;
+    try {
+      extractionResponse = await axios.post(
+        `${FACIAL_SERVICE_URL}/extract-features`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            'X-Internal-Token': INTERNAL_SERVICE_TOKEN
+          },
+          timeout: 10000
+        }
+      );
+    } catch (error) {
+      console.error('[ValidateFace] Error en servicio de reconocimiento:', error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Error procesando imagen'
+      });
+    }
+    
+    const extractionData = extractionResponse.data;
+    
+    // Validaciones
+    if (!extractionData.face_detected) {
+      return res.status(400).json({
+        success: false,
+        message: extractionData.message || 'No se detectó un rostro en la imagen'
+      });
+    }
+    
+    if (extractionData.liveness_score < 0.6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La imagen no pasó las pruebas de autenticidad. Use una cámara en vivo.'
+      });
+    }
+    
+    if (extractionData.quality_score < 0.6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La calidad de la imagen es insuficiente. Mejore la iluminación y enfoque.'
+      });
+    }
+
+    // Verificar que el rostro no esté ya registrado
+    console.log('[ValidateFace] Verificando unicidad del rostro...');
+    
+    try {
+      const existingBiometrics = await FacialBiometric.find({ isActive: true });
+      console.log(`[ValidateFace] Comparando con ${existingBiometrics.length} rostros registrados...`);
+      
+      for (const existingBio of existingBiometrics) {
+        try {
+          const decryptedEncoding = FacialBiometric.decryptEncoding(
+            existingBio.encryptedEncoding,
+            existingBio.iv,
+            existingBio.authTag,
+            existingBio.salt,
+            BIOMETRIC_MASTER_KEY
+          );
+          
+          const comparisonResponse = await axios.post(
+            `${FACIAL_SERVICE_URL}/compare-faces`,
+            {
+              encoding1: extractionData.encoding,
+              encoding2: decryptedEncoding,
+              threshold: 0.45
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Token': INTERNAL_SERVICE_TOKEN
+              },
+              timeout: 5000
+            }
+          );
+          
+          const comparison = comparisonResponse.data;
+          
+          if (comparison.match) {
+            console.log(`[ValidateFace] ⚠️ Rostro duplicado detectado! Distancia: ${comparison.distance}`);
+            return res.status(409).json({
+              success: false,
+              message: '⚠️ Este rostro ya está registrado en otra cuenta. Cada persona solo puede registrar su rostro una vez.',
+              isDuplicate: true,
+              similarityScore: (comparison.confidence * 100).toFixed(1)
+            });
+          }
+        } catch (decryptError) {
+          console.error('[ValidateFace] Error al comparar:', decryptError.message);
+          continue;
+        }
+      }
+      
+      console.log('[ValidateFace] ✅ Rostro único verificado');
+      
+    } catch (uniquenessError) {
+      console.error('[ValidateFace] Error verificando unicidad:', uniquenessError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error validando imagen. Por favor, inténtelo nuevamente.'
+      });
+    }
+    
+    // Todo OK
+    res.json({
+      success: true,
+      message: 'Rostro validado correctamente',
+      metrics: {
+        qualityScore: extractionData.quality_score,
+        livenessScore: extractionData.liveness_score,
+        confidence: extractionData.confidence
+      },
+      processingTime: Date.now() - startTime
+    });
+    
+  } catch (error) {
+    console.error('[ValidateFace] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error validando rostro'
+    });
+  }
+};
+
 module.exports = {
   requestChallenge,
   verifyBiometric,
   registerBiometric,
+  validateFace,
   getBiometricStatus
 };

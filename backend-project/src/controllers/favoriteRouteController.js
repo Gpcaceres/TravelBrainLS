@@ -1,4 +1,5 @@
 const FavoriteRoute = require('../models/FavoriteRoute');
+const { invalidateCache } = require('../utils/cache');
 
 /**
  * Get all favorite routes
@@ -59,6 +60,11 @@ exports.createFavoriteRoute = async (req, res) => {
     });
 
     const savedFavoriteRoute = await favoriteRoute.save();
+    
+    // Invalidate cache after creating
+    invalidateCache('/favorite-routes');
+    invalidateCache('favorite-routes');
+    
     res.status(201).json(savedFavoriteRoute);
   } catch (error) {
     console.error('Error creating favorite route:', error);
@@ -102,6 +108,11 @@ exports.updateFavoriteRoute = async (req, res) => {
 
     const updatedFavoriteRoute = await favoriteRoute.save();
     console.log('Favorite route updated successfully');
+    
+    // Invalidate cache after updating
+    invalidateCache('/favorite-routes');
+    invalidateCache('favorite-routes');
+    
     res.json(updatedFavoriteRoute);
   } catch (error) {
     console.error('Error updating favorite route:', error);
@@ -125,6 +136,11 @@ exports.deleteFavoriteRoute = async (req, res) => {
 
     await favoriteRoute.deleteOne();
     console.log('Favorite route deleted successfully');
+    
+    // Invalidate cache after deleting
+    invalidateCache('/favorite-routes');
+    invalidateCache('favorite-routes');
+    
     res.json({ message: 'Favorite route deleted successfully', deletedId: req.params.id });
   } catch (error) {
     console.error('Error deleting favorite route:', error);

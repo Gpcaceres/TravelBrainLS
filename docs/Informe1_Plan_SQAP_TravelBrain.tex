@@ -1,0 +1,1351 @@
+﻿\documentclass[12pt,a4paper]{article}
+
+% Paquetes necesarios
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
+
+% ConfiguraciÃ³n de mÃ¡rgenes
+\geometry{top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm}
+
+% ConfiguraciÃ³n de encabezados y pies de pÃ¡gina
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small SQAP - TravelBrain}
+\fancyhead[R]{\small ESPE 2026}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ConfiguraciÃ³n de hipervÃ­nculos
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={Plan de Aseguramiento de Calidad - TravelBrain},
+    pdfauthor={CÃ¡ceres GermÃ¡n, Anthony Villareal},
+}
+
+% ConfiguraciÃ³n de colores para cÃ³digo
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Definir lenguaje JavaScript para listings
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, async, await, class, extends, export, import, require},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{codegreen}\ttfamily,
+  stringstyle=\color{codepurple}\ttfamily,
+  morestring=[b]",
+  morestring=[b]"
+}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% Archivo de bibliografÃ­a
+\addbibresource{referencias.bib}
+
+\begin{document}
+
+% ============================================================
+% PORTADA
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    {\Large \textbf{UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE}} \\[0.5cm]
+    {\large Departamento de Ciencias de la ComputaciÃ³n} \\[1.5cm]
+    
+    \includegraphics[width=0.3\textwidth]{img/ESPE.png} \\[1cm]
+    
+    {\LARGE \textbf{Proyecto Final: Plan de Aseguramiento de la Calidad (SQAP)}} \\[0.5cm]
+    {\Large \textbf{Sistema TravelBrain}} \\[1.5cm]
+    
+    {\large \textbf{Informe 1: Plan Maestro de Pruebas, MetodologÃ­a SCRUM y Herramientas}} \\[2cm]
+    
+    \begin{tabular}{ll}
+        \textbf{Asignatura:} & Aseguramiento de la Calidad del Software \\
+        \textbf{NRC:} & 27886 \\
+        \textbf{Estudiantes:} & CÃ¡ceres GermÃ¡n (Scrum Master \& Tech Lead) \\
+                              & Anthony Villareal (Development Team) \\
+        \textbf{Docente:} & Ing. Diego Gamboa, Mgs. \\
+        \textbf{Fecha:} & 21 de enero de 2026 \\
+    \end{tabular}
+    
+    \vfill
+    
+    {\large SangolquÃ­, Ecuador} \\
+    {\large 2026}
+\end{titlepage}
+
+% ============================================================
+% ÃNDICE
+% ============================================================
+\tableofcontents
+\newpage
+
+% ============================================================
+% LISTA DE TABLAS Y FIGURAS
+% ============================================================
+\listoftables
+\listoffigures
+\newpage
+
+% ============================================================
+% RESUMEN EJECUTIVO
+% ============================================================
+\section*{Resumen Ejecutivo}
+\addcontentsline{toc}{section}{Resumen Ejecutivo}
+
+El presente documento constituye el \textbf{Plan de Aseguramiento de la Calidad del Software (SQAP)} para el sistema TravelBrain, una aplicaciÃ³n web de tres capas con arquitectura de microservicios que proporciona gestiÃ³n de viajes, pronÃ³stico del clima y autenticaciÃ³n biomÃ©trica facial avanzada.
+
+Este plan se desarrolla bajo la metodologÃ­a Ã¡gil \textbf{SCRUM}, con un sprint de calidad de 3 semanas, y define la estrategia integral de pruebas que incluye anÃ¡lisis estÃ¡tico, pruebas unitarias, pruebas de integraciÃ³n, pruebas funcionales y anÃ¡lisis de seguridad mediante OWASP ZAP.
+
+El objetivo principal es demostrar la capacidad de planificar, documentar y ejecutar un proceso de SQA robusto, evidenciando la mejora en la confiabilidad del producto final antes de su paso a producciÃ³n.
+
+\textbf{Palabras clave:} Aseguramiento de Calidad, SQAP, SCRUM, Arquitectura de Microservicios, Pruebas de Software, OWASP ZAP, Cypress, Jest, Postman.
+
+\newpage
+
+% ============================================================
+% 1. INTRODUCCIÃ“N
+% ============================================================
+\section{IntroducciÃ³n}
+
+\subsection{Contexto del Proyecto}
+
+TravelBrain es una aplicaciÃ³n web moderna diseÃ±ada para la gestiÃ³n integral de viajes, que incorpora tecnologÃ­as de vanguardia como autenticaciÃ³n biomÃ©trica facial y servicios de pronÃ³stico meteorolÃ³gico \cite{ieee829}. El sistema fue desarrollado utilizando una arquitectura de microservicios con las siguientes tecnologÃ­as:
+
+\begin{itemize}
+    \item \textbf{Frontend:} React 18 + Vite 7.3.1
+    \item \textbf{Backend:} Node.js 18 + Express.js
+    \item \textbf{Microservicio de Reconocimiento Facial:} Python 3.10 + FastAPI
+    \item \textbf{Base de Datos:} MongoDB Atlas
+    \item \textbf{ContenedorizaciÃ³n:} Docker + Docker Compose
+\end{itemize}
+
+\subsection{PropÃ³sito del Documento}
+
+Este documento tiene como propÃ³sito establecer el marco metodolÃ³gico y estratÃ©gico para el aseguramiento de la calidad del sistema TravelBrain. Define el alcance, recursos, herramientas, riesgos y cronograma del proceso de pruebas, siguiendo los estÃ¡ndares IEEE 829 \cite{ieee829} y las mejores prÃ¡cticas de la ingenierÃ­a de software \cite{pressman2014}.
+
+\subsection{Alcance del Plan de Calidad}
+
+El plan de aseguramiento de calidad cubre los siguientes aspectos:
+
+\begin{enumerate}
+    \item \textbf{AnÃ¡lisis estÃ¡tico de cÃ³digo} mediante herramientas automatizadas
+    \item \textbf{Pruebas unitarias} para componentes individuales
+    \item \textbf{Pruebas de integraciÃ³n} entre servicios
+    \item \textbf{Pruebas funcionales} end-to-end
+    \item \textbf{Pruebas de seguridad} con OWASP ZAP
+    \item \textbf{GestiÃ³n de defectos} y trazabilidad
+\end{enumerate}
+
+\subsection{Audiencia}
+
+Este documento estÃ¡ dirigido a:
+
+\begin{itemize}
+    \item Equipo de desarrollo TravelBrain
+    \item Stakeholders del proyecto (Ing. Diego Gamboa)
+    \item Equipo de Quality Assurance
+    \item Profesores y evaluadores acadÃ©micos
+\end{itemize}
+
+% ============================================================
+% 2. METODOLOGÃA SCRUM
+% ============================================================
+\section{MetodologÃ­a Ãgil: SCRUM}
+
+\subsection{Marco de Trabajo SCRUM}
+
+SCRUM es un marco de trabajo Ã¡gil para el desarrollo y mantenimiento de productos complejos \cite{schwaber2020}. En el contexto de este proyecto de aseguramiento de calidad, SCRUM proporciona la estructura necesaria para planificar, ejecutar y revisar las actividades de prueba de manera iterativa e incremental.
+
+\subsection{Roles del Equipo}
+
+El equipo SCRUM para el proyecto TravelBrain estÃ¡ conformado por:
+
+\begin{table}[H]
+\centering
+\caption{Roles y Responsabilidades del Equipo SCRUM}
+\label{tab:roles_scrum}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Rol} & \textbf{Persona} & \textbf{Responsabilidades} \\ \hline
+\textbf{Product Owner} & Ing. Diego Gamboa & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Definir criterios de aceptaciÃ³n
+    \item Priorizar casos de prueba
+    \item Validar resultados de calidad
+\end{itemize} \\ \hline
+
+\textbf{Scrum Master} & CÃ¡ceres GermÃ¡n & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Facilitar ceremonias SCRUM
+    \item Remover impedimentos
+    \item Coordinar estrategia de pruebas
+    \item Gestionar herramientas (Trello)
+\end{itemize} \\ \hline
+
+\textbf{Development Team} & Anthony Villareal & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Ejecutar casos de prueba
+    \item Desarrollar scripts automatizados
+    \item Reportar defectos
+    \item Documentar evidencias
+\end{itemize} \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{Sprint de Calidad (3 Semanas)}
+
+El proyecto se organiza en un Ãºnico \textbf{Sprint de Calidad} de 3 semanas, estructurado de la siguiente manera:
+
+\subsubsection{Semana 1: PlanificaciÃ³n y AnÃ¡lisis EstÃ¡tico}
+
+\begin{itemize}
+    \item \textbf{Objetivo:} Establecer la base para el proceso de pruebas
+    \item \textbf{Actividades:}
+    \begin{enumerate}
+        \item Sprint Planning: DefiniciÃ³n del Sprint Backlog
+        \item ConfiguraciÃ³n del entorno de pruebas
+        \item Diligenciamiento del SQAP
+        \item EjecuciÃ³n de anÃ¡lisis estÃ¡tico (ESLint, SonarQube)
+        \item IdentificaciÃ³n de deuda tÃ©cnica
+        \item Daily Standups
+    \end{enumerate}
+    \item \textbf{Entregables:}
+    \begin{itemize}
+        \item Documento SQAP inicial
+        \item Reporte de anÃ¡lisis estÃ¡tico
+        \item Backlog de mejoras de cÃ³digo
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Semana 2: DiseÃ±o y EjecuciÃ³n de Pruebas DinÃ¡micas}
+
+\begin{itemize}
+    \item \textbf{Objetivo:} DiseÃ±ar y ejecutar casos de prueba
+    \item \textbf{Actividades:}
+    \begin{enumerate}
+        \item DiseÃ±o de casos de prueba basados en requisitos
+        \item Desarrollo de scripts de pruebas automatizadas
+        \item EjecuciÃ³n de pruebas unitarias (Jest)
+        \item EjecuciÃ³n de pruebas funcionales (Cypress, Postman)
+        \item EjecuciÃ³n de pruebas de seguridad (OWASP ZAP)
+        \item Registro y clasificaciÃ³n de defectos
+        \item Daily Standups
+    \end{enumerate}
+    \item \textbf{Entregables:}
+    \begin{itemize}
+        \item Matriz de casos de prueba
+        \item Scripts automatizados
+        \item Reporte de defectos inicial
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Semana 3: Cierre, DocumentaciÃ³n y Evidencias}
+
+\begin{itemize}
+    \item \textbf{Objetivo:} Consolidar resultados y generar artefactos finales
+    \item \textbf{Actividades:}
+    \begin{enumerate}
+        \item EjecuciÃ³n de pruebas de regresiÃ³n
+        \item AnÃ¡lisis de mÃ©tricas de calidad
+        \item GeneraciÃ³n de reportes ejecutivos
+        \item GrabaciÃ³n de videos de evidencia
+        \item Sprint Review: PresentaciÃ³n de resultados
+        \item Sprint Retrospective: Lecciones aprendidas
+        \item ConsolidaciÃ³n del documento final
+    \end{enumerate}
+    \item \textbf{Entregables:}
+    \begin{itemize}
+        \item Test Summary Report
+        \item Videos de evidencia
+        \item Documento SQAP completo (PDF)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Ceremonias SCRUM}
+
+\begin{table}[H]
+\centering
+\caption{Calendario de Ceremonias SCRUM}
+\label{tab:ceremonias_scrum}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Ceremonia} & \textbf{Frecuencia} & \textbf{PropÃ³sito} \\ \hline
+\textbf{Sprint Planning} & DÃ­a 1 (2 horas) & Planificar el trabajo del sprint, definir Sprint Goal y seleccionar items del Product Backlog \\ \hline
+\textbf{Daily Standup} & Diario (15 min) & Sincronizar actividades, identificar impedimentos y ajustar plan del dÃ­a \\ \hline
+\textbf{Sprint Review} & DÃ­a 21 (1 hora) & Demostrar trabajo completado, recopilar feedback del Product Owner \\ \hline
+\textbf{Sprint Retrospective} & DÃ­a 21 (45 min) & Reflexionar sobre el proceso, identificar mejoras para futuros sprints \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{GestiÃ³n con Trello}
+
+El seguimiento del Sprint se realiza mediante \textbf{Trello}, una herramienta Ã¡gil de gestiÃ³n de proyectos que permite visualizar el flujo de trabajo mediante tableros Kanban \cite{atlassian2023}.
+
+\subsubsection{Estructura del Tablero Trello}
+
+\begin{table}[H]
+\centering
+\caption{Estructura de Listas en Trello}
+\label{tab:trello_board}
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Lista} & \textbf{DescripciÃ³n} \\ \hline
+\textbf{Product Backlog} & Todos los Ã­tems de trabajo identificados (casos de prueba, anÃ¡lisis, documentaciÃ³n) \\ \hline
+\textbf{Sprint Backlog} & Ãtems seleccionados para el sprint actual \\ \hline
+\textbf{In Progress} & Tareas en ejecuciÃ³n actualmente \\ \hline
+\textbf{Testing/Review} & Tareas completadas pendientes de revisiÃ³n \\ \hline
+\textbf{Done} & Tareas completadas y validadas \\ \hline
+\textbf{Impediments} & Bloqueadores identificados que requieren resoluciÃ³n \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{CaracterÃ­sticas de las Tarjetas}
+
+Cada tarjeta en Trello incluye:
+
+\begin{itemize}
+    \item \textbf{TÃ­tulo:} DescripciÃ³n corta de la tarea
+    \item \textbf{DescripciÃ³n:} Detalles completos, criterios de aceptaciÃ³n
+    \item \textbf{Etiquetas:} ClasificaciÃ³n (Frontend, Backend, Security, Documentation)
+    \item \textbf{AsignaciÃ³n:} Responsable(s) de la tarea
+    \item \textbf{Fecha lÃ­mite:} Deadline esperado
+    \item \textbf{Checklist:} Subtareas especÃ­ficas
+    \item \textbf{Adjuntos:} Evidencias, capturas, scripts
+    \item \textbf{Comentarios:} Actualizaciones y comunicaciÃ³n
+\end{itemize}
+
+% ============================================================
+% 3. PLAN DE ASEGURAMIENTO DE CALIDAD (SQAP)
+% ============================================================
+\section{Plan de Aseguramiento de Calidad (SQAP)}
+
+\subsection{Alcance de las Pruebas}
+
+\subsubsection{MÃ³dulos Incluidos en las Pruebas}
+
+Los siguientes componentes estÃ¡n \textbf{incluidos} en el alcance de las pruebas:
+
+\begin{table}[H]
+\centering
+\caption{MÃ³dulos Incluidos en las Pruebas}
+\label{tab:modulos_incluidos}
+\begin{tabularx}{\textwidth}{|l|X|c|}
+\hline
+\textbf{Capa} & \textbf{MÃ³dulos} & \textbf{Prioridad} \\ \hline
+\multirow{4}{*}{\textbf{Frontend}} 
+& Sistema de autenticaciÃ³n (Login tradicional y biomÃ©trico) & Alta \\ \cline{2-3}
+& GestiÃ³n de viajes (CRUD) & Alta \\ \cline{2-3}
+& BÃºsqueda y visualizaciÃ³n de clima & Media \\ \cline{2-3}
+& Panel de administraciÃ³n & Media \\ \hline
+
+\multirow{5}{*}{\textbf{Backend API}} 
+& Controladores de autenticaciÃ³n (authController) & Alta \\ \cline{2-3}
+& Controladores biomÃ©tricos (biometricController) & Alta \\ \cline{2-3}
+& Middlewares de seguridad (auth.js, cors.js) & Alta \\ \cline{2-3}
+& Controladores de viajes y destinos & Media \\ \cline{2-3}
+& IntegraciÃ³n con OpenWeather API & Media \\ \hline
+
+\multirow{3}{*}{\textbf{Microservicio}} 
+& ExtracciÃ³n de caracterÃ­sticas faciales & Alta \\ \cline{2-3}
+& ComparaciÃ³n de rostros & Alta \\ \cline{2-3}
+& DetecciÃ³n de liveness (anti-spoofing) & Alta \\ \hline
+
+\textbf{Seguridad} 
+& AnÃ¡lisis de vulnerabilidades OWASP Top 10 & Alta \\ \hline
+
+\textbf{IntegraciÃ³n} 
+& ComunicaciÃ³n Backend $\leftrightarrow$ Facial Service & Alta \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{MÃ³dulos Excluidos de las Pruebas}
+
+Los siguientes componentes estÃ¡n \textbf{excluidos} del alcance:
+
+\begin{table}[H]
+\centering
+\caption{MÃ³dulos Excluidos de las Pruebas}
+\label{tab:modulos_excluidos}
+\begin{tabularx}{\textwidth}{|X|X|}
+\hline
+\textbf{MÃ³dulo} & \textbf{JustificaciÃ³n} \\ \hline
+Infraestructura de MongoDB Atlas & Servicio gestionado externamente con SLA garantizado \\ \hline
+ContenedorizaciÃ³n Docker & TecnologÃ­a madura y estable, fuera del Ã¡mbito de desarrollo \\ \hline
+API de OpenWeather & Servicio de terceros, sin control sobre su implementaciÃ³n \\ \hline
+MÃ³dulos de logging internos & Funcionalidad auxiliar, no crÃ­tica para el negocio \\ \hline
+Sistema de cachÃ© en memoria & ImplementaciÃ³n bÃ¡sica, bajo riesgo \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{Estrategia de Pruebas}
+
+La estrategia de pruebas de TravelBrain sigue el modelo de \textbf{pirÃ¡mide de pruebas} \cite{cohn2009}, priorizando pruebas unitarias en la base, seguidas de pruebas de integraciÃ³n y finalmente pruebas end-to-end en la cima.
+
+\subsubsection{Tipos de Pruebas Seleccionadas}
+
+\begin{enumerate}
+    \item \textbf{Pruebas EstÃ¡ticas}
+    \begin{itemize}
+        \item AnÃ¡lisis de cÃ³digo fuente sin ejecuciÃ³n
+        \item DetecciÃ³n de code smells, vulnerabilidades y violaciones de estÃ¡ndares
+        \item Herramientas: ESLint (JavaScript), Pylint (Python)
+        \item Plataforma: SonarQube para anÃ¡lisis integrado
+    \end{itemize}
+    
+    \item \textbf{Pruebas Unitarias}
+    \begin{itemize}
+        \item VerificaciÃ³n de componentes individuales aislados
+        \item Cobertura objetivo: $\geq$ 70\% para cÃ³digo crÃ­tico
+        \item Framework: Jest para Frontend y Backend
+        \item React Testing Library para componentes React
+    \end{itemize}
+    
+    \item \textbf{Pruebas de IntegraciÃ³n}
+    \begin{itemize}
+        \item ValidaciÃ³n de interacciones entre mÃ³dulos
+        \item Pruebas de APIs RESTful (Backend $\leftrightarrow$ Frontend)
+        \item ComunicaciÃ³n entre microservicios
+        \item Herramienta: Postman + Newman (CLI)
+    \end{itemize}
+    
+    \item \textbf{Pruebas Funcionales End-to-End (E2E)}
+    \begin{itemize}
+        \item SimulaciÃ³n de flujos completos de usuario
+        \item ValidaciÃ³n de requisitos funcionales
+        \item Herramienta: Cypress para Frontend
+        \item EjecuciÃ³n en modo headless para CI/CD
+    \end{itemize}
+    
+    \item \textbf{Pruebas de Seguridad}
+    \begin{itemize}
+        \item Escaneo de vulnerabilidades OWASP Top 10
+        \item AnÃ¡lisis de inyecciÃ³n SQL, XSS, CSRF
+        \item EvaluaciÃ³n de autenticaciÃ³n y autorizaciÃ³n
+        \item Herramienta: OWASP ZAP (Zed Attack Proxy)
+    \end{itemize}
+    
+    \item \textbf{Pruebas de RegresiÃ³n}
+    \begin{itemize}
+        \item EjecuciÃ³n de suite completa tras cambios
+        \item AutomatizaciÃ³n para eficiencia
+        \item EjecuciÃ³n: Al final de cada semana del sprint
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Niveles de Prueba}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{c}
+\hline
+\textbf{E2E Tests (Cypress)} \\
+\textit{UI + Backend + BD} \\
+\hline
+\hline
+\textbf{Integration Tests (Postman)} \\
+\textit{APIs + Microservicios} \\
+\hline
+\hline
+\textbf{Unit Tests (Jest + RTL)} \\
+\textit{Funciones, Componentes, Controladores} \\
+\hline
+\hline
+\textbf{Static Analysis (ESLint, SonarQube)} \\
+\textit{AnÃ¡lisis de CÃ³digo Fuente} \\
+\hline
+\end{tabular}
+\caption{PirÃ¡mide de Pruebas - TravelBrain}
+\label{fig:test_pyramid}
+\end{figure}
+
+\subsection{Criterios de Entrada y Salida}
+
+\subsubsection{Criterios de Entrada (Entry Criteria)}
+
+Las pruebas pueden iniciarse cuando se cumplan \textbf{todos} los siguientes criterios:
+
+\begin{enumerate}
+    \item CÃ³digo fuente disponible en repositorio Git con historial completo
+    \item Entorno de pruebas configurado y funcional (Docker Compose)
+    \item Base de datos de prueba con datos de seed
+    \item DocumentaciÃ³n tÃ©cnica disponible (README, ARCHITECTURE.md)
+    \item Requisitos funcionales documentados y validados
+    \item Herramientas de prueba instaladas y configuradas
+    \item Plan de pruebas aprobado por Product Owner
+\end{enumerate}
+
+\subsubsection{Criterios de Salida (Exit Criteria)}
+
+El proceso de pruebas se considera completo cuando:
+
+\begin{enumerate}
+    \item \textbf{EjecuciÃ³n:} $\geq$ 95\% de casos de prueba planificados ejecutados
+    \item \textbf{AprobaciÃ³n:} $\geq$ 85\% de casos de prueba pasados exitosamente
+    \item \textbf{Defectos CrÃ­ticos:} 0 defectos de severidad CRÃTICA abiertos
+    \item \textbf{Defectos Altos:} $\leq$ 2 defectos de severidad ALTA abiertos
+    \item \textbf{Cobertura de CÃ³digo:} $\geq$ 70\% en mÃ³dulos crÃ­ticos
+    \item \textbf{Seguridad:} 0 vulnerabilidades de nivel ALTO/CRÃTICO sin mitigar
+    \item \textbf{DocumentaciÃ³n:} Reporte final de pruebas completado y aprobado
+    \item \textbf{AprobaciÃ³n:} Sign-off del Product Owner (Ing. Diego Gamboa)
+\end{enumerate}
+
+\subsubsection{Criterios de SuspensiÃ³n}
+
+Las pruebas se suspenderÃ¡n si:
+
+\begin{itemize}
+    \item El entorno de pruebas queda inoperativo por mÃ¡s de 4 horas
+    \item Se detectan $\geq$ 5 defectos crÃ­ticos en una misma sesiÃ³n
+    \item Cambios mayores en requisitos que invaliden $\geq$ 30\% de casos de prueba
+    \item Indisponibilidad de recursos clave (miembros del equipo)
+\end{itemize}
+
+\subsection{Criterios de AceptaciÃ³n y Rechazo}
+
+\subsubsection{Criterios de AceptaciÃ³n del Software}
+
+El sistema TravelBrain serÃ¡ \textbf{aceptado para producciÃ³n} si cumple:
+
+\begin{table}[H]
+\centering
+\caption{Criterios de AceptaciÃ³n}
+\label{tab:criterios_aceptacion}
+\begin{tabularx}{\textwidth}{|l|X|c|}
+\hline
+\textbf{CategorÃ­a} & \textbf{Criterio} & \textbf{Umbral} \\ \hline
+\textbf{Funcionalidad} & Casos de prueba funcionales aprobados & $\geq$ 90\% \\ \hline
+\textbf{Confiabilidad} & Tasa de Ã©xito de transacciones & $\geq$ 95\% \\ \hline
+\textbf{Seguridad} & Vulnerabilidades crÃ­ticas resueltas & 100\% \\ \hline
+\textbf{Rendimiento} & Tiempo de respuesta API & $\leq$ 2s \\ \hline
+\textbf{Usabilidad} & Flujos principales sin errores & 100\% \\ \hline
+\textbf{Cobertura} & Cobertura de cÃ³digo en mÃ³dulos crÃ­ticos & $\geq$ 70\% \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Criterios de Rechazo del Software}
+
+El sistema serÃ¡ \textbf{rechazado} si presenta:
+
+\begin{itemize}
+    \item Cualquier defecto de severidad CRÃTICA sin resolver
+    \item Vulnerabilidades de seguridad de nivel ALTO sin parche
+    \item Fallo en flujos crÃ­ticos: Login, Registro, AutenticaciÃ³n BiomÃ©trica
+    \item PÃ©rdida o corrupciÃ³n de datos en base de datos
+    \item Imposibilidad de despliegue en entorno de producciÃ³n
+    \item Incumplimiento de normativas de privacidad (GDPR, LOPD)
+\end{itemize}
+
+% ============================================================
+% 4. HERRAMIENTAS DE PRUEBA
+% ============================================================
+\section{Stack TecnolÃ³gico de Pruebas}
+
+\subsection{SelecciÃ³n de Herramientas}
+
+La selecciÃ³n de herramientas se basa en criterios de compatibilidad tecnolÃ³gica, madurez de la herramienta, soporte comunitario y facilidad de integraciÃ³n con el stack existente \cite{dustin2009}.
+
+\begin{table}[H]
+\centering
+\caption{Stack TecnolÃ³gico de Pruebas - TravelBrain}
+\label{tab:stack_herramientas}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Capa} & \textbf{Herramienta} & \textbf{JustificaciÃ³n} \\ \hline
+\textbf{Frontend (React)} & Cypress 13.x & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Framework E2E lÃ­der para aplicaciones web modernas
+    \item IntegraciÃ³n nativa con React
+    \item Debugging visual en tiempo real
+    \item EjecuciÃ³n headless para CI/CD
+\end{itemize} \\ \hline
+
+\textbf{Backend (Express)} & Postman + Newman & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item EstÃ¡ndar de la industria para pruebas de APIs REST
+    \item Colecciones reutilizables
+    \item AutomatizaciÃ³n CLI con Newman
+    \item GeneraciÃ³n de documentaciÃ³n automÃ¡tica
+\end{itemize} \\ \hline
+
+\textbf{Microservicios} & Postman + Newman & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Soporte para autenticaciÃ³n compleja (tokens internos)
+    \item Scripts pre-request y tests dinÃ¡micos
+    \item ValidaciÃ³n de contratos entre servicios
+\end{itemize} \\ \hline
+
+\textbf{Seguridad} & OWASP ZAP 2.14 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Herramienta open-source lÃ­der en seguridad web
+    \item Cobertura completa OWASP Top 10
+    \item Modo daemon para integraciÃ³n CI/CD
+    \item Escaneo activo y pasivo
+\end{itemize} \\ \hline
+
+\textbf{Unit Testing Backend} & Jest 29.x & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Framework oficial recomendado para Node.js
+    \item Zero-config para proyectos JavaScript
+    \item Mocking integrado
+    \item Reporte de cobertura incluido
+\end{itemize} \\ \hline
+
+\textbf{Unit Testing Frontend} & Jest + RTL & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item React Testing Library: best practice oficial de React
+    \item Enfoque en pruebas de comportamiento del usuario
+    \item Queries accesibles y semÃ¡nticas
+    \item IntegraciÃ³n perfecta con Jest
+\end{itemize} \\ \hline
+
+\textbf{GestiÃ³n SCRUM} & Trello & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Interfaz visual Kanban intuitiva
+    \item ColaboraciÃ³n en tiempo real
+    \item Integraciones con Slack, GitHub
+    \item Gratuito para equipos pequeÃ±os
+\end{itemize} \\ \hline
+
+\textbf{AnÃ¡lisis EstÃ¡tico} & ESLint + Pylint & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Linters estÃ¡ndar para JS y Python
+    \item DetecciÃ³n de errores sintÃ¡cticos y lÃ³gicos
+    \item Configuraciones personalizables
+    \item IntegraciÃ³n con VS Code
+\end{itemize} \\ \hline
+
+\textbf{Code Quality} & SonarQube CE & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item AnÃ¡lisis multi-lenguaje (JS, Python)
+    \item DetecciÃ³n de code smells y vulnerabilidades
+    \item MÃ©tricas de mantenibilidad
+    \item Dashboard centralizado
+\end{itemize} \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{ConfiguraciÃ³n de Cypress}
+
+\subsubsection{InstalaciÃ³n y ConfiguraciÃ³n}
+
+\begin{lstlisting}[language=bash, caption={InstalaciÃ³n de Cypress}]
+cd frontend-react
+npm install --save-dev cypress @testing-library/cypress
+npx cypress open  # Inicializar estructura de carpetas
+\end{lstlisting}
+
+\subsubsection{Estructura de Pruebas E2E}
+
+\begin{lstlisting}[caption={Estructura de Directorio Cypress}]
+frontend-react/
+â””â”€â”€ cypress/
+    â”œâ”€â”€ e2e/
+    â”‚   â”œâ”€â”€ auth/
+    â”‚   â”‚   â”œâ”€â”€ login.cy.js
+    â”‚   â”‚   â”œâ”€â”€ register.cy.js
+    â”‚   â”‚   â””â”€â”€ biometric-auth.cy.js
+    â”‚   â”œâ”€â”€ trips/
+    â”‚   â”‚   â”œâ”€â”€ trip-crud.cy.js
+    â”‚   â”‚   â””â”€â”€ trip-filters.cy.js
+    â”‚   â””â”€â”€ weather/
+    â”‚       â””â”€â”€ weather-search.cy.js
+    â”œâ”€â”€ fixtures/
+    â”‚   â””â”€â”€ users.json
+    â”œâ”€â”€ support/
+    â”‚   â”œâ”€â”€ commands.js
+    â”‚   â””â”€â”€ e2e.js
+    â””â”€â”€ cypress.config.js
+\end{lstlisting}
+
+\subsubsection{Ejemplo de Caso de Prueba Cypress}
+
+\begin{lstlisting}[language=JavaScript, caption={Prueba E2E: Login Tradicional}]
+describe("Authentication - Traditional Login", () => {
+  beforeEach(() => {
+    cy.visit("http://localhost:3001/login");
+  });
+
+  it("should login successfully with valid credentials", () => {
+    cy.get("input[name="email"]").type("test@mail.com");
+    cy.get("input[name="password"]").type("Test123!");
+    cy.get("button[type="submit"]").click();
+    
+    // Assertions
+    cy.url().should("include", "/dashboard");
+    cy.contains("Welcome").should("be.visible");
+    cy.window().its("localStorage.token").should("exist");
+  });
+
+  it("should show error with invalid credentials", () => {
+    cy.get("input[name="email"]").type("invalid@mail.com");
+    cy.get("input[name="password"]").type("wrongpassword");
+    cy.get("button[type="submit"]").click();
+    
+    cy.contains("Invalid credentials").should("be.visible");
+    cy.url().should("include", "/login");
+  });
+});
+\end{lstlisting}
+
+\subsection{ConfiguraciÃ³n de Postman}
+
+\subsubsection{Colecciones de Pruebas}
+
+Se crearÃ¡n las siguientes colecciones en Postman:
+
+\begin{enumerate}
+    \item \textbf{Auth Collection:} /api/auth/* (login, register, logout)
+    \item \textbf{Biometric Collection:} /api/biometric/* (challenge, verify, register)
+    \item \textbf{Trips Collection:} /trips (GET, POST, PUT, DELETE)
+    \item \textbf{Weather Collection:} /weather, /weathers
+    \item \textbf{Admin Collection:} /users (admin endpoints)
+    \item \textbf{Facial Service Collection:} Pruebas internas del microservicio
+\end{enumerate}
+
+\subsubsection{Variables de Entorno}
+
+\begin{lstlisting}[language=json, caption={Variables de Entorno Postman}]
+{
+  "base_url": "http://localhost:4000",
+  "facial_service_url": "http://localhost:8001",
+  "jwt_token": "",
+  "user_id": "",
+  "challenge_token": "",
+  "internal_service_token": "4cbb87675864b66be014c97..."
+}
+\end{lstlisting}
+
+\subsubsection{Scripts de Prueba Postman}
+
+\begin{lstlisting}[language=JavaScript, caption={Test Script: POST /api/auth/login}]
+// Test Script
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has token", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.data).to.have.property("token");
+    pm.environment.set("jwt_token", jsonData.data.token);
+});
+
+pm.test("Response time < 2000ms", function () {
+    pm.expect(pm.response.responseTime).to.be.below(2000);
+});
+\end{lstlisting}
+
+\subsection{ConfiguraciÃ³n de Jest}
+
+\subsubsection{Jest para Backend}
+
+\begin{lstlisting}[language=json, caption={jest.config.js - Backend}]
+module.exports = {
+  testEnvironment: "node",
+  coveragePathIgnorePatterns: ["/node_modules/"],
+  collectCoverageFrom: [
+    "src/**/*.js",
+    "!src/server.js",
+    "!src/config/**"
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70
+    }
+  },
+  testMatch: ["**/__tests__/**/*.js", "**/?(*.)+(spec|test).js"]
+};
+\end{lstlisting}
+
+\subsubsection{Ejemplo de Prueba Unitaria Backend}
+
+\begin{lstlisting}[language=JavaScript, caption={Prueba Unitaria: authController.js}]
+const { register } = require("../src/controllers/authController");
+const User = require("../src/models/User");
+const bcrypt = require("bcrypt");
+
+jest.mock("../src/models/User");
+jest.mock("bcrypt");
+
+describe("authController - register", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {
+      body: {
+        email: "newuser@mail.com",
+        password: "Password123!",
+        username: "newuser"
+      }
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+  });
+
+  it("should register user successfully", async () => {
+    User.findOne.mockResolvedValue(null);
+    bcrypt.hash.mockResolvedValue("hashedPassword");
+    User.prototype.save = jest.fn().mockResolvedValue({
+      _id: "123",
+      email: "newuser@mail.com",
+      username: "newuser"
+    });
+
+    await register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        message: "User registered successfully"
+      })
+    );
+  });
+});
+\end{lstlisting}
+
+\subsection{ConfiguraciÃ³n de OWASP ZAP}
+
+\subsubsection{InstalaciÃ³n con Docker}
+
+\begin{lstlisting}[language=bash, caption={Despliegue de OWASP ZAP}]
+docker pull zaproxy/zap-stable
+docker run -u zap -p 8081:8080 -d zaproxy/zap-stable \
+  zap.sh -daemon -host 0.0.0.0 -port 8080 \
+  -config api.key=travelbrain2026
+\end{lstlisting}
+
+\subsubsection{Tipos de Escaneos Programados}
+
+\begin{enumerate}
+    \item \textbf{Baseline Scan:} Escaneo rÃ¡pido pasivo (5-10 min)
+    \item \textbf{Full Scan:} Escaneo activo completo (30-60 min)
+    \item \textbf{API Scan:} Escaneo especÃ­fico de endpoints REST
+    \item \textbf{Authenticated Scan:} Con sesiÃ³n de usuario autenticado
+\end{enumerate}
+
+\subsubsection{ConfiguraciÃ³n de Contexto}
+
+\begin{lstlisting}[language=yaml, caption={zap-config.yml}]
+env:
+  contexts:
+    - name: TravelBrain
+      urls:
+        - http://localhost:3001
+        - http://localhost:4000
+      authentication:
+        method: json
+        loginUrl: http://localhost:4000/api/auth/login
+        loginRequestData: "{"email":"test@mail.com","password":"test123"}"
+      sessionManagement:
+        method: cookie
+
+jobs:
+  - type: passiveScan-config
+  - type: spider
+    parameters:
+      url: http://localhost:3001
+      maxDuration: 5
+  - type: activeScan
+    parameters:
+      context: TravelBrain
+\end{lstlisting}
+
+% ============================================================
+% 5. GESTIÃ“N DE RIESGOS
+% ============================================================
+\section{GestiÃ³n de Riesgos}
+
+\subsection{IdentificaciÃ³n de Riesgos}
+
+Se han identificado riesgos en dos categorÃ­as: \textbf{riesgos del producto} (asociados al software) y \textbf{riesgos del proyecto} (asociados al proceso de pruebas) \cite{pressman2014}.
+
+\subsubsection{Riesgos del Producto}
+
+\begin{table}[H]
+\centering
+\caption{Riesgos del Producto}
+\label{tab:riesgos_producto}
+\small
+\begin{tabularx}{\textwidth}{|p{1cm}|X|c|c|p{2.5cm}|}
+\hline
+\textbf{ID} & \textbf{Riesgo} & \textbf{Prob.} & \textbf{Imp.} & \textbf{ExposiciÃ³n} \\ \hline
+RP-01 & Vulnerabilidades de seguridad en autenticaciÃ³n biomÃ©trica (spoofing, replay attacks) & Media & Alta & Alta \\ \hline
+RP-02 & PÃ©rdida o corrupciÃ³n de datos biomÃ©tricos cifrados & Baja & CrÃ­tica & Alta \\ \hline
+RP-03 & Fallo en comunicaciÃ³n entre Backend y Facial Service por token invÃ¡lido & Media & Alta & Alta \\ \hline
+RP-04 & InyecciÃ³n SQL en endpoints sin sanitizaciÃ³n & Baja & Alta & Media \\ \hline
+RP-05 & Cross-Site Scripting (XSS) en formularios de entrada & Media & Media & Media \\ \hline
+RP-06 & Fuga de informaciÃ³n sensible en logs o respuestas API & Media & Alta & Alta \\ \hline
+RP-07 & Problemas de rendimiento en detecciÃ³n facial con mÃºltiples usuarios concurrentes & Alta & Media & Alta \\ \hline
+RP-08 & Inconsistencias en base de datos por falta de transacciones & Baja & Media & Baja \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Riesgos del Proyecto de Pruebas}
+
+\begin{table}[H]
+\centering
+\caption{Riesgos del Proyecto de Pruebas}
+\label{tab:riesgos_proyecto}
+\small
+\begin{tabularx}{\textwidth}{|p{1cm}|X|c|c|p{2.5cm}|}
+\hline
+\textbf{ID} & \textbf{Riesgo} & \textbf{Prob.} & \textbf{Imp.} & \textbf{ExposiciÃ³n} \\ \hline
+RPR-01 & Tiempo insuficiente (3 semanas) para cobertura completa & Alta & Alta & Alta \\ \hline
+RPR-02 & Falta de conocimiento en herramientas especÃ­ficas (Cypress, OWASP ZAP) & Media & Media & Media \\ \hline
+RPR-03 & Indisponibilidad de servicios externos (MongoDB Atlas, OpenWeather API) & Baja & Alta & Media \\ \hline
+RPR-04 & Cambios de Ãºltima hora en requisitos por parte del Product Owner & Media & Alta & Alta \\ \hline
+RPR-05 & Fallos en entorno de pruebas (Docker, dependencias) & Media & Media & Media \\ \hline
+RPR-06 & Sobrecarga de trabajo en miembros del equipo & Alta & Media & Alta \\ \hline
+RPR-07 & Dificultad para replicar bugs en entorno de pruebas & Media & Baja & Baja \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{AnÃ¡lisis y PriorizaciÃ³n de Riesgos}
+
+\subsubsection{Matriz de Probabilidad e Impacto}
+
+\begin{table}[H]
+\centering
+\caption{Matriz de Riesgo}
+\label{tab:matriz_riesgo}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{\textbf{Impacto}} & \multicolumn{4}{c|}{\textbf{Probabilidad}} \\ \cline{2-5}
+ & \textbf{Baja} & \textbf{Media} & \textbf{Alta} & \textbf{Muy Alta} \\ \hline
+\textbf{CrÃ­tico} & RP-02 & & & \\ \hline
+\textbf{Alto} & RP-04 & RP-01, RP-03, RP-06, RPR-03, RPR-04 & RP-07, RPR-01 & \\ \hline
+\textbf{Medio} & RP-08, RPR-07 & RP-05, RPR-02, RPR-05 & RPR-06 & \\ \hline
+\textbf{Bajo} & & & & \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Estrategias de MitigaciÃ³n}
+
+\begin{table}[H]
+\centering
+\caption{Plan de MitigaciÃ³n de Riesgos}
+\label{tab:mitigacion_riesgos}
+\scriptsize
+\begin{tabularx}{\textwidth}{|p{1.2cm}|X|X|}
+\hline
+\textbf{ID Riesgo} & \textbf{Estrategia de MitigaciÃ³n} & \textbf{Plan de Contingencia} \\ \hline
+
+RP-01 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Pruebas exhaustivas de liveness detection
+    \item AnÃ¡lisis de spoofing con imÃ¡genes/videos
+    \item ValidaciÃ³n de threshold de similitud
+\end{itemize} & 
+Implementar 2FA adicional (TOTP) como backup \\ \hline
+
+RP-02 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Backups automÃ¡ticos diarios de BD
+    \item ValidaciÃ³n de cifrado AES-256
+    \item Logs de auditorÃ­a de accesos
+\end{itemize} & 
+Procedimiento de recuperaciÃ³n desde backup mÃ¡s reciente \\ \hline
+
+RP-03 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Pruebas de integraciÃ³n exhaustivas
+    \item ValidaciÃ³n de token en cada request
+    \item Logging detallado de comunicaciÃ³n
+\end{itemize} & 
+Implementar retry logic con exponential backoff \\ \hline
+
+RPR-01 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item PriorizaciÃ³n rigurosa de casos de prueba
+    \item AutomatizaciÃ³n mÃ¡xima de pruebas
+    \item Trabajo paralelo en Frontend/Backend
+\end{itemize} & 
+Solicitar extensiÃ³n de 1 semana adicional al Product Owner \\ \hline
+
+RPR-04 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Congelar requisitos al inicio del sprint
+    \item Change Control Board para evaluar cambios
+    \item EstimaciÃ³n de impacto antes de aceptar
+\end{itemize} & 
+Negociar aplazamiento de cambios no crÃ­ticos al siguiente sprint \\ \hline
+
+RPR-06 & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Daily Standups para detectar sobrecarga
+    \item RedistribuciÃ³n dinÃ¡mica de tareas
+    \item Timebox estricto por actividad
+\end{itemize} & 
+Reducir alcance eliminando pruebas de baja prioridad \\ \hline
+\end{tabularx}
+\end{table}
+
+% ============================================================
+% 6. RECURSOS Y RESPONSABILIDADES
+% ============================================================
+\section{Recursos y Responsabilidades}
+
+\subsection{Equipo de Trabajo}
+
+\begin{table}[H]
+\centering
+\caption{AsignaciÃ³n de Responsabilidades}
+\label{tab:responsabilidades}
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Rol} & \textbf{Persona} & \textbf{Responsabilidades en QA} \\ \hline
+\textbf{Product Owner} & Ing. Diego Gamboa & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item Definir criterios de aceptaciÃ³n
+    \item Priorizar casos de prueba
+    \item Validar resultados finales
+    \item Aprobar paso a producciÃ³n
+\end{itemize} \\ \hline
+
+\textbf{Scrum Master \& QA Lead} & CÃ¡ceres GermÃ¡n & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item DiseÃ±ar estrategia de pruebas
+    \item Configurar herramientas (Cypress, ZAP)
+    \item Ejecutar pruebas de seguridad
+    \item Redactar documentaciÃ³n SQAP
+    \item Consolidar reportes finales
+\end{itemize} \\ \hline
+
+\textbf{QA Tester} & Anthony Villareal & 
+\begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+    \item DiseÃ±ar casos de prueba
+    \item Ejecutar pruebas manuales y automatizadas
+    \item Desarrollar scripts Jest y Postman
+    \item Registrar defectos en Trello
+    \item Grabar videos de evidencia
+\end{itemize} \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{Recursos de Hardware y Software}
+
+\subsubsection{Hardware}
+
+\begin{itemize}
+    \item \textbf{Equipos de desarrollo:} 2 laptops con Intel Core i7, 16GB RAM, 512GB SSD
+    \item \textbf{ConexiÃ³n a Internet:} Fibra Ã³ptica 100 Mbps (mÃ­nimo)
+    \item \textbf{Servidor de pruebas:} MÃ¡quina local con Docker (8GB RAM dedicados)
+\end{itemize}
+
+\subsubsection{Software}
+
+\begin{itemize}
+    \item Sistema Operativo: Windows 11 / Linux Ubuntu 22.04
+    \item Docker Desktop 4.x
+    \item Node.js 18 LTS
+    \item Python 3.10
+    \item Visual Studio Code con extensiones (ESLint, Jest Runner)
+    \item Postman Desktop 10.x
+    \item Google Chrome / Firefox (para Cypress)
+    \item OWASP ZAP 2.14
+    \item Git + GitHub
+\end{itemize}
+
+\subsection{Recursos de Acceso}
+
+\begin{itemize}
+    \item Acceso a repositorio GitHub: \url{https://github.com/Gpcaceres/TravelBrainLS}
+    \item Credenciales de MongoDB Atlas
+    \item API Key de OpenWeather
+    \item Acceso a tablero Trello del proyecto
+    \item Cuenta de Google Drive para evidencias visuales
+\end{itemize}
+
+% ============================================================
+% 7. CRONOGRAMA DETALLADO
+% ============================================================
+\section{Cronograma Detallado del Sprint}
+
+\begin{table}[H]
+\centering
+\caption{Cronograma Sprint de Calidad (3 Semanas)}
+\label{tab:cronograma_sprint}
+\tiny
+\begin{tabularx}{\textwidth}{|c|l|X|c|c|}
+\hline
+\textbf{Semana} & \textbf{DÃ­a} & \textbf{Actividades} & \textbf{Horas} & \textbf{Resp.} \\ \hline
+
+\multirow{10}{*}{\textbf{1}} 
+& Lun & Sprint Planning, Setup entorno pruebas & 4h & Equipo \\ \cline{2-5}
+& Mar & ConfiguraciÃ³n herramientas (Cypress, Postman, ZAP) & 6h & G.C. \\ \cline{2-5}
+& MiÃ© & Diligenciamiento SQAP (secciones 1-3) & 4h & G.C. \\ \cline{2-5}
+& Jue & AnÃ¡lisis estÃ¡tico con ESLint, Pylint & 4h & A.V. \\ \cline{2-5}
+& Vie & ConfiguraciÃ³n SonarQube, generaciÃ³n reporte & 5h & G.C. \\ \cline{2-5}
+& SÃ¡b & RevisiÃ³n deuda tÃ©cnica, priorizaciÃ³n fixes & 3h & Equipo \\ \cline{2-5}
+& Dom & DocumentaciÃ³n de hallazgos estÃ¡ticos & 2h & A.V. \\ \hline
+
+\multirow{10}{*}{\textbf{2}} 
+& Lun & DiseÃ±o de casos de prueba (Matriz) & 5h & A.V. \\ \cline{2-5}
+& Mar & Desarrollo scripts Jest (Backend) & 6h & A.V. \\ \cline{2-5}
+& MiÃ© & Desarrollo scripts Jest + RTL (Frontend) & 6h & G.C. \\ \cline{2-5}
+& Jue & Desarrollo colecciones Postman (APIs) & 5h & A.V. \\ \cline{2-5}
+& Vie & Desarrollo pruebas E2E Cypress & 7h & G.C. \\ \cline{2-5}
+& SÃ¡b & EjecuciÃ³n pruebas unitarias + anÃ¡lisis cobertura & 5h & Equipo \\ \cline{2-5}
+& Dom & EjecuciÃ³n pruebas integraciÃ³n + E2E & 6h & Equipo \\ \hline
+
+\multirow{10}{*}{\textbf{3}} 
+& Lun & EjecuciÃ³n pruebas seguridad OWASP ZAP & 6h & G.C. \\ \cline{2-5}
+& Mar & AnÃ¡lisis vulnerabilidades, registro defectos & 5h & G.C. \\ \cline{2-5}
+& MiÃ© & Pruebas de regresiÃ³n (suite completa) & 5h & A.V. \\ \cline{2-5}
+& Jue & ConsolidaciÃ³n mÃ©tricas, generaciÃ³n reportes & 4h & Equipo \\ \cline{2-5}
+& Vie & GrabaciÃ³n videos de evidencia & 4h & A.V. \\ \cline{2-5}
+& SÃ¡b & RedacciÃ³n informe final (SQAP completo) & 8h & G.C. \\ \cline{2-5}
+& Dom & Sprint Review + Retrospective, entrega final & 3h & Equipo \\ \hline
+
+\multicolumn{3}{|r|}{\textbf{Total horas estimadas:}} & \textbf{103h} & \\ \hline
+\end{tabularx}
+\end{table}
+
+% ============================================================
+% 8. MÃ‰TRICAS DE CALIDAD
+% ============================================================
+\section{MÃ©tricas de Calidad}
+
+\subsection{MÃ©tricas de Proceso}
+
+\begin{table}[H]
+\centering
+\caption{MÃ©tricas de Proceso}
+\label{tab:metricas_proceso}
+\begin{tabularx}{\textwidth}{|l|X|c|}
+\hline
+\textbf{MÃ©trica} & \textbf{DescripciÃ³n} & \textbf{Objetivo} \\ \hline
+Casos DiseÃ±ados & Total de casos de prueba planificados & $\geq$ 80 \\ \hline
+Casos Ejecutados & Casos ejecutados / Casos diseÃ±ados & $\geq$ 95\% \\ \hline
+Tasa de AprobaciÃ³n & Casos pasados / Casos ejecutados & $\geq$ 85\% \\ \hline
+Tiempo Promedio EjecuciÃ³n & Tiempo por caso (automatizado) & $\leq$ 30s \\ \hline
+Cobertura de CÃ³digo & \% lÃ­neas ejecutadas (Jest) & $\geq$ 70\% \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsection{MÃ©tricas de Producto}
+
+\begin{table}[H]
+\centering
+\caption{MÃ©tricas de Producto}
+\label{tab:metricas_producto}
+\begin{tabularx}{\textwidth}{|l|X|c|}
+\hline
+\textbf{MÃ©trica} & \textbf{DescripciÃ³n} & \textbf{Objetivo} \\ \hline
+Densidad de Defectos & Defectos / KLOC (mil lÃ­neas cÃ³digo) & $\leq$ 5 \\ \hline
+Defectos por MÃ³dulo & Defectos agrupados por componente & Variable \\ \hline
+Severidad de Defectos & DistribuciÃ³n por severidad (C/A/M/B) & 0 CrÃ­ticos \\ \hline
+Tiempo Medio ResoluciÃ³n & DÃ­as desde detecciÃ³n hasta cierre & $\leq$ 3 dÃ­as \\ \hline
+Vulnerabilidades CrÃ­ticas & Detectadas por OWASP ZAP & 0 \\ \hline
+\end{tabularx}
+\end{table}
+
+% ============================================================
+% 9. CONCLUSIONES
+% ============================================================
+\section{Conclusiones}
+
+El presente \textbf{Plan de Aseguramiento de la Calidad (SQAP)} establece las bases metodolÃ³gicas, estratÃ©gicas y operativas para garantizar la confiabilidad y seguridad del sistema TravelBrain antes de su paso a producciÃ³n.
+
+\subsection{Aspectos Clave del Plan}
+
+\begin{enumerate}
+    \item \textbf{MetodologÃ­a Ãgil SCRUM:} La adopciÃ³n de SCRUM con un sprint de 3 semanas permite una gestiÃ³n iterativa y adaptativa del proceso de pruebas, con ceremonias definidas y roles claros.
+    
+    \item \textbf{Stack TecnolÃ³gico Robusto:} La selecciÃ³n de herramientas lÃ­deres de la industria (Cypress, Jest, Postman, OWASP ZAP) asegura cobertura integral en todos los niveles de prueba.
+    
+    \item \textbf{Enfoque Piramidal:} La estrategia sigue la pirÃ¡mide de pruebas, priorizando pruebas unitarias en la base y complementando con pruebas de integraciÃ³n y E2E en niveles superiores.
+    
+    \item \textbf{GestiÃ³n Proactiva de Riesgos:} Se han identificado 15 riesgos clave con sus respectivas estrategias de mitigaciÃ³n, minimizando la probabilidad de fracaso del proyecto.
+    
+    \item \textbf{Criterios Claros de AceptaciÃ³n:} Los umbrales definidos (85\% aprobaciÃ³n, 0 crÃ­ticos, 70\% cobertura) proporcionan una base objetiva para la decisiÃ³n de producciÃ³n.
+\end{enumerate}
+
+\subsection{Expectativas de Resultados}
+
+Al finalizar el sprint de calidad, se espera:
+
+\begin{itemize}
+    \item Cobertura de pruebas $\geq$ 70\% en cÃ³digo crÃ­tico
+    \item Tasa de aprobaciÃ³n $\geq$ 85\%
+    \item 0 vulnerabilidades crÃ­ticas de seguridad
+    \item Documento SQAP completo con evidencias trazables
+    \item Sistema validado y listo para despliegue en producciÃ³n
+\end{itemize}
+
+\subsection{PrÃ³ximos Pasos}
+
+El \textbf{Informe 2} complementarÃ¡ este plan con el diseÃ±o detallado de casos de prueba, matrices de rastreabilidad y especificaciones tÃ©cnicas de cada script de prueba automatizada.
+
+% ============================================================
+% REFERENCIAS
+% ============================================================
+\newpage
+\printbibliography[title={Referencias BibliogrÃ¡ficas}]
+
+% Entradas de bibliografÃ­a inline
+\begin{filecontents}{referencias.bib}
+@techreport{ieee829,
+  author = {{IEEE}},
+  title = {IEEE Standard for Software and System Test Documentation},
+  institution = {Institute of Electrical and Electronics Engineers},
+  year = {2008},
+  number = {IEEE Std 829-2008},
+  note = {DOI: 10.1109/IEEESTD.2008.4578383}
+}
+
+@book{pressman2014,
+  author = {Pressman, Roger S. and Maxim, Bruce R.},
+  title = {Software Engineering: A Practitioner"s Approach},
+  edition = {8th},
+  publisher = {McGraw-Hill Education},
+  year = {2014},
+  isbn = {978-0078022128}
+}
+
+@book{schwaber2020,
+  author = {Schwaber, Ken and Sutherland, Jeff},
+  title = {The Scrum Guide: The Definitive Guide to Scrum},
+  year = {2020},
+  url = {https://scrumguides.org/},
+  note = {Scrum.org}
+}
+
+@book{cohn2009,
+  author = {Cohn, Mike},
+  title = {Succeeding with Agile: Software Development Using Scrum},
+  publisher = {Addison-Wesley Professional},
+  year = {2009},
+  isbn = {978-0321579362}
+}
+
+@book{dustin2009,
+  author = {Dustin, Elfriede and Rashka, Jeff and Paul, John},
+  title = {Automated Software Testing: Introduction, Management, and Performance},
+  publisher = {Addison-Wesley Professional},
+  year = {2009},
+  isbn = {978-0201432879}
+}
+
+@misc{atlassian2023,
+  author = {{Atlassian}},
+  title = {Agile Project Management with Trello},
+  year = {2023},
+  url = {https://www.atlassian.com/software/trello},
+  note = {Accessed: 2026-01-21}
+}
+\end{filecontents}
+
+% ============================================================
+% ANEXOS
+% ============================================================
+\newpage
+\appendix
+\section{Anexos}
+
+\subsection{Anexo A: ConfiguraciÃ³n de Entorno}
+
+\subsubsection{Variables de Entorno (.env)}
+
+\begin{lstlisting}[caption={.env - Backend}]
+NODE_ENV=development
+PORT=4000
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/travel_brain
+JWT_SECRET=development-secret-key-change-in-production
+JWT_EXPIRES_IN=24h
+OPENWEATHER_API_KEY=your-api-key-here
+INTERNAL_SERVICE_TOKEN=4cbb87675864b66be014c97ab768328e...
+BIOMETRIC_MASTER_KEY=\8YWvTNB9uR@HTMoSFs?Hl4wX:BBSEZ_
+VERIFICATION_THRESHOLD=0.6
+FACIAL_SERVICE_URL=http://facial-recognition:8001
+\end{lstlisting}
+
+\subsection{Anexo B: Comandos Docker}
+
+\begin{lstlisting}[language=bash, caption={Comandos de Despliegue}]
+# Construir e iniciar servicios
+docker-compose up -d --build
+
+# Ver logs
+docker-compose logs -f backend
+
+# Detener servicios
+docker-compose down
+
+# Ejecutar pruebas dentro del contenedor
+docker exec -it travelbrain-backend npm test
+\end{lstlisting}
+
+\subsection{Anexo C: Checklist de RevisiÃ³n}
+
+\begin{itemize}
+    \item[$\square$] Entorno de pruebas desplegado y funcional
+    \item[$\square$] Herramientas instaladas y configuradas
+    \item[$\square$] Casos de prueba diseÃ±ados y revisados
+    \item[$\square$] Scripts automatizados desarrollados
+    \item[$\square$] AnÃ¡lisis estÃ¡tico ejecutado y documentado
+    \item[$\square$] Pruebas unitarias con cobertura $\geq$ 70\%
+    \item[$\square$] Pruebas de integraciÃ³n ejecutadas
+    \item[$\square$] Pruebas E2E ejecutadas
+    \item[$\square$] Escaneo de seguridad OWASP ZAP completado
+    \item[$\square$] Defectos registrados y clasificados
+    \item[$\square$] Reportes de ejecuciÃ³n generados
+    \item[$\square$] Videos de evidencia grabados
+    \item[$\square$] Documento SQAP completo
+    \item[$\square$] AprobaciÃ³n del Product Owner
+\end{itemize}
+
+\end{document}
+

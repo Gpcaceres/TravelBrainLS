@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const config = require('../config/env');
+
+const SALT_ROUNDS = 10;
 
 /**
  * Verify JWT Token
@@ -48,27 +51,28 @@ exports.verifyToken = async (req, res) => {
 };
 
 /**
- * Simple Login for Development/Testing
- * @route POST /api/auth/login
+ * Validate Credentials (Step 1 of MFA)
+ * Validates email and password without generating full token
+ * @route POST /api/auth/validate-credentials
  */
-exports.simpleLogin = async (req, res) => {
+exports.validateCredentials = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email es requerido'
+        message: 'Email y contraseña son requeridos'
       });
     }
 
     // Buscar usuario existente
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Usuario no encontrado. Por favor, crea una cuenta primero.'
+        message: 'Credenciales inválidas'
       });
     }
 
@@ -80,28 +84,60 @@ exports.simpleLogin = async (req, res) => {
       });
     }
 
-    // Generar JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-        email: user.email,
-        role: user.role
-      },
-      config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
-    );
+    // Verificar contraseña con bcrypt
+    if (!user.passwordHash) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciales inválidas. Por favor, restablece tu contraseña.'
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciales inválidas'
+      });
+    }
+
+    // Verificar si tiene biometría registrada
+    const FacialBiometric = require('../models/FacialBiometric');
+    const biometric = await FacialBiometric.findOne({ 
+      userId: user._id,
+      isActive: true 
+    });
 
     res.json({
       success: true,
-      token,
-      user: {
-        _id: user._id.toString(),
-        email: user.email,
-        username: user.username,
-        name: user.name,
-        role: user.role
-      },
-      msg: `Bienvenido ${user.name}`
+      message: 'Credenciales válidas. Procede con reconocimiento facial.',
+      hasBiometric: !!biometric,
+      requiresBiometric: true
+    });
+
+  } catch (error) {
+    console.error('Error al validar credenciales:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al validar credenciales',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Simple Login - DISABLED (Use MFA flow instead)
+ * Login biométrico es ahora obligatorio para todos los usuarios
+ * @route POST /api/auth/login
+ * @deprecated Use /api/auth/validate-credentials + /api/biometric/verify instead
+ */
+exports.simpleLogin = async (req, res) => {
+  try {
+    return res.status(403).json({
+      success: false,
+      message: 'El inicio de sesión directo está deshabilitado. Por favor, use el flujo MFA: valide credenciales y luego reconocimiento facial.',
+      requiresBiometric: true,
+      requiresMFA: true
     });
 
   } catch (error) {
@@ -115,10 +151,19 @@ exports.simpleLogin = async (req, res) => {
 };
 
 /**
- * Register new user
+ * Register new user with biometric
  * @route POST /api/auth/register
  */
 exports.register = async (req, res) => {
+  const axios = require('axios');
+  const FormData = require('form-data');
+  const FacialBiometric = require('../models/FacialBiometric');
+  const BiometricAuditLog = require('../models/BiometricAuditLog');
+  
+  const FACIAL_SERVICE_URL = process.env.FACIAL_SERVICE_URL || 'http://facial-recognition:8001';
+  const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 'CHANGE_THIS_IN_PRODUCTION_INTERNAL_TOKEN_123';
+  const BIOMETRIC_MASTER_KEY = process.env.BIOMETRIC_MASTER_KEY || 'CHANGE_THIS_MASTER_KEY_IN_PRODUCTION_256BITS';
+
   try {
     const { email, username, name, password } = req.body;
 
@@ -127,6 +172,21 @@ exports.register = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Email es requerido'
+      });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La contraseña debe tener al menos 6 caracteres'
+      });
+    }
+
+    // Validar que se envió la imagen biométrica
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere una imagen del rostro para completar el registro'
       });
     }
 
@@ -145,33 +205,165 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Procesar imagen biométrica ANTES de guardar el usuario
+    console.log('[Register] Procesando imagen biométrica...');
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: 'face.jpg',
+      contentType: req.file.mimetype
+    });
+
+    let extractionResponse;
+    try {
+      extractionResponse = await axios.post(
+        `${FACIAL_SERVICE_URL}/extract-features`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            'X-Internal-Token': INTERNAL_SERVICE_TOKEN
+          },
+          timeout: 10000
+        }
+      );
+    } catch (error) {
+      console.error('[Register] Error comunicándose con servicio facial:', error.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Error procesando imagen facial. Por favor, inténtelo nuevamente.'
+      });
+    }
+
+    const extractionData = extractionResponse.data;
+
+    if (!extractionData.face_detected) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se detectó un rostro en la imagen. Por favor, intenta nuevamente.'
+      });
+    }
+
+    if (extractionData.liveness_score < 0.5) {
+      return res.status(400).json({
+        success: false,
+        message: 'La imagen no pasó la verificación de prueba de vida. Por favor, usa una foto en vivo.'
+      });
+    }
+
+    if (extractionData.quality_score < 0.4) {
+      return res.status(400).json({
+        success: false,
+        message: 'La calidad de la imagen es insuficiente. Por favor, mejora la iluminación.'
+      });
+    }
+
+    // Verificar que no haya un rostro duplicado
+    console.log('[Register] Verificando unicidad del rostro...');
+    const existingBiometrics = await FacialBiometric.find({ isActive: true });
+    
+    for (const existingBio of existingBiometrics) {
+      try {
+        const storedEncoding = FacialBiometric.decryptEncoding(
+          existingBio.encryptedEncoding,
+          existingBio.iv,
+          existingBio.authTag,
+          existingBio.salt,
+          BIOMETRIC_MASTER_KEY
+        );
+
+        const comparisonResponse = await axios.post(
+          `${FACIAL_SERVICE_URL}/compare-faces`,
+          {
+            encoding1: extractionData.encoding,
+            encoding2: storedEncoding,
+            threshold: 0.6
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Token': INTERNAL_SERVICE_TOKEN
+            },
+            timeout: 5000
+          }
+        );
+
+        if (comparisonResponse.data.match) {
+          console.log('[Register] ⚠️ Rostro duplicado detectado!');
+          return res.status(409).json({
+            success: false,
+            message: 'Este rostro ya está registrado en el sistema',
+            isDuplicate: true
+          });
+        }
+      } catch (compareError) {
+        console.error('[Register] Error al comparar con biometría existente:', compareError.message);
+      }
+    }
+
+    console.log('[Register] ✅ Rostro único verificado. Creando usuario...');
+
+    // Hashear la contraseña
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
     // Crear nuevo usuario
     const newUsername = username || email.split('@')[0];
     const user = new User({
       email: email.toLowerCase(),
       username: newUsername,
       name: name || newUsername,
+      passwordHash: passwordHash,
       role: 'USER',
       status: 'ACTIVE'
     });
 
     await user.save();
-    console.log('Nuevo usuario registrado:', user.email);
+    console.log('[Register] Nuevo usuario guardado:', user.email);
 
-    // Generar JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-        email: user.email,
-        role: user.role
-      },
-      config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
+    // Guardar biometría
+    const { encrypted, iv, authTag, salt } = FacialBiometric.encryptEncoding(
+      extractionData.encoding,
+      BIOMETRIC_MASTER_KEY
     );
+
+    const biometric = new FacialBiometric({
+      userId: user._id,
+      encryptedEncoding: encrypted,
+      iv: iv,
+      authTag: authTag,
+      salt: salt,
+      isActive: true,
+      registeredAt: new Date(),
+      metadata: {
+        captureQuality: extractionData.quality_score,
+        livenessScore: extractionData.liveness_score,
+        confidence: extractionData.confidence
+      }
+    });
+
+    await biometric.save();
+    console.log('[Register] ✅ Biometría guardada para usuario:', user.email);
+
+    // Registrar en auditoría
+    await BiometricAuditLog.logAttempt({
+      userId: user._id,
+      email: user.email,
+      operation: 'REGISTER_BIOMETRIC',
+      result: 'SUCCESS',
+      reason: 'Registro exitoso con biometría',
+      metrics: {
+        qualityScore: extractionData.quality_score,
+        livenessScore: extractionData.liveness_score,
+        confidence: extractionData.confidence
+      },
+      clientInfo: {
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      }
+    });
 
     res.status(201).json({
       success: true,
-      token,
+      message: `Cuenta creada exitosamente con biometría registrada. Bienvenido ${user.name}`,
       user: {
         _id: user._id.toString(),
         email: user.email,
@@ -179,11 +371,11 @@ exports.register = async (req, res) => {
         name: user.name,
         role: user.role
       },
-      msg: `Cuenta creada exitosamente. Bienvenido ${user.name}`
+      biometricRegistered: true
     });
 
   } catch (error) {
-    console.error('Error en registro:', error);
+    console.error('[Register] Error en registro:', error);
     res.status(500).json({
       success: false,
       message: 'Error al registrar usuario',

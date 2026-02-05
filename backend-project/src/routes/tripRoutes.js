@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController');
 const { authenticate } = require('../middlewares/auth');
+const { cacheMiddleware } = require('../middlewares/cache');
 
 /**
  * Trip Routes
@@ -9,10 +10,10 @@ const { authenticate } = require('../middlewares/auth');
  */
 
 // GET /trips - Get all trips
-router.get('/trips', authenticate, tripController.getAllTrips);
+router.get('/trips', authenticate, cacheMiddleware(300), tripController.getAllTrips);
 
 // GET /trips/:id - Get trip by ID
-router.get('/trips/:id', authenticate, tripController.getTripById);
+router.get('/trips/:id', authenticate, cacheMiddleware(300), tripController.getTripById);
 
 // POST /trips - Create new trip
 router.post('/trips', authenticate, tripController.createTrip);

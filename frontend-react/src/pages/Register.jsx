@@ -34,39 +34,9 @@ export default function Register() {
       return
     }
 
-    setLoading(true)
-
-    try {
-      // Register new user
-      const registerResponse = await api.post(API_CONFIG.ENDPOINTS.REGISTER, {
-        email: formData.email,
-        username: formData.username,
-        name: formData.name,
-        password: formData.password
-      })
-
-      if (registerResponse.data.success && registerResponse.data.token) {
-        saveAuth(registerResponse.data.token, registerResponse.data.user)
-        setLoading(false)
-        // Mostrar modal de registro biométrico
-        setShowBiometricSetup(true)
-      } else {
-        setError(registerResponse.data.message || 'Registration failed')
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error('Registration error:', err)
-      let errorMessage = 'Registration failed. Please try again.'
-      
-      if (err.response?.status === 409) {
-        errorMessage = 'This email or username is already registered. Please use a different one.'
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message
-      }
-      
-      setError(errorMessage)
-      setLoading(false)
-    }
+    // En lugar de registrar inmediatamente, mostrar modal biométrico primero
+    setLoading(false)
+    setShowBiometricSetup(true)
   }
 
   return (
@@ -186,32 +156,74 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Modal de Registro Biométrico */}
+      {/* Modal de Registro Biométrico - OBLIGATORIO */}
       {showBiometricSetup && (
-        <div className="biometric-modal-overlay">
+        <div className="biometric-modal-overlay" style={{ background: 'rgba(0, 0, 0, 0.95)' }}>
           <div className="biometric-modal-content" style={{ maxWidth: '700px' }}>
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '1rem',
+              padding: '1rem',
+              background: 'rgba(71, 245, 154, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid var(--color-primary)'
+            }}>
+              <p style={{ margin: 0, color: 'var(--color-primary)', fontSize: '0.9rem', fontWeight: '600' }}>
+                🔒 Registro Biométrico Requerido
+              </p>
+              <p style={{ margin: '0.5rem 0 0 0', color: 'var(--color-neutral-light)', fontSize: '0.85rem' }}>
+                Primero captura tu rostro, luego se creará tu cuenta
+              </p>
+            </div>
             <BiometricRegister
-              onSuccess={() => {
+              registrationData={formData}
+              onSuccess={async (faceBlob) => {
+                // Ahora sí registrar el usuario con la biometría ya capturada
                 setShowBiometricSetup(false)
-                // Limpiar sesión y redirigir al login
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-                navigate('/login', { state: { message: '¡Registro exitoso! Ahora puedes iniciar sesión.' } })
-              }}
-              onSkip={() => {
-                setShowBiometricSetup(false)
-                // Limpiar sesión y redirigir al login
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-                navigate('/login', { state: { message: 'Registro completado. Ahora puedes iniciar sesión.' } })
+                setLoading(true)
+                try {
+                  // Crear FormData para enviar datos + imagen
+                  const formDataToSend = new FormData()
+                  formDataToSend.append('email', formData.email)
+                  formDataToSend.append('username', formData.username)
+                  formDataToSend.append('name', formData.name)
+                  formDataToSend.append('password', formData.password)
+                  formDataToSend.append('face', faceBlob, 'face.jpg')
+
+                  const registerResponse = await api.post(API_CONFIG.ENDPOINTS.REGISTER, formDataToSend, {
+                    headers: {
+                      'Content-Type': 'multipart/form-data'
+                    }
+                  })
+
+                  if (registerResponse.data.success) {
+                    navigate('/login', { state: { message: '¡Registro exitoso! Ahora puedes iniciar sesión con reconocimiento facial.' } })
+                  } else {
+                    setError(registerResponse.data.message || 'Registration failed')
+                  }
+                } catch (err) {
+                  console.error('Registration error:', err)
+                  let errorMessage = 'Error al crear la cuenta. Por favor, inténtalo nuevamente.'
+                  
+                  if (err.response?.status === 409) {
+                    errorMessage = 'Este email o username ya está registrado.'
+                  } else if (err.response?.data?.message) {
+                    errorMessage = err.response.data.message
+                  }
+                  
+                  setError(errorMessage)
+                } finally {
+                  setLoading(false)
+                }
               }}
               onError={(error) => {
                 console.error('Biometric error:', error)
+                setError('Error al capturar biometría. Por favor, inténtalo nuevamente.')
                 setShowBiometricSetup(false)
-                // Limpiar sesión y redirigir al login
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-                navigate('/login', { state: { message: 'Registro completado. Ahora puedes iniciar sesión.' } })
+              }}
+              onCancel={() => {
+                setShowBiometricSetup(false)
+                setError('Registro cancelado. El registro biométrico es obligatorio para usar la aplicación.')
               }}
             />
           </div>

@@ -2,6 +2,7 @@ const Itinerary = require('../models/Itinerary');
 const Trip = require('../models/Trip');
 const axios = require('axios');
 const config = require('../config/env');
+const { invalidateCache } = require('../utils/cache');
 
 /**
  * Fetch weather forecast for destination
@@ -204,6 +205,10 @@ exports.generateItinerary = async (req, res) => {
     const savedItinerary = await itinerary.save();
     console.log('[GenerateItinerary] ✅ Itinerary created:', savedItinerary._id);
 
+    // Invalidate cache after creating
+    invalidateCache('/itineraries');
+    invalidateCache('itineraries');
+
     res.status(201).json({
       success: true,
       data: savedItinerary
@@ -328,6 +333,10 @@ exports.deleteItinerary = async (req, res) => {
     }
 
     await Itinerary.findByIdAndDelete(req.params.id);
+
+    // Invalidate cache after deleting
+    invalidateCache('/itineraries');
+    invalidateCache('itineraries');
 
     res.json({
       success: true,

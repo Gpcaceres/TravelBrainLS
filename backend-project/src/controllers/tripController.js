@@ -1,4 +1,5 @@
 const Trip = require('../models/Trip');
+const { invalidateCache } = require('../utils/cache');
 
 /**
  * Get all trips
@@ -54,6 +55,11 @@ exports.createTrip = async (req, res) => {
 
     const savedTrip = await trip.save();
     console.log('[CreateTrip] ✅ Trip created:', savedTrip._id);
+    
+    // Invalidate cache after creating
+    invalidateCache('/trips');
+    invalidateCache('trips');
+    
     res.status(201).json(savedTrip);
   } catch (error) {
     console.error('[CreateTrip] ❌ Error creating trip:', error);
@@ -86,6 +92,11 @@ exports.updateTrip = async (req, res) => {
 
     const updatedTrip = await trip.save();
     console.log('Trip updated successfully');
+    
+    // Invalidate cache after updating
+    invalidateCache('/trips');
+    invalidateCache('trips');
+    
     res.json(updatedTrip);
   } catch (error) {
     console.error('Error updating trip:', error);
@@ -109,6 +120,11 @@ exports.deleteTrip = async (req, res) => {
 
     await trip.deleteOne();
     console.log('Trip deleted successfully');
+    
+    // Invalidate cache after deleting
+    invalidateCache('/trips');
+    invalidateCache('trips');
+    
     res.json({ message: 'Trip deleted successfully', deletedId: req.params.id });
   } catch (error) {
     console.error('Error deleting trip:', error);

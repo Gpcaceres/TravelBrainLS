@@ -1,0 +1,1602 @@
+    \documentclass[12pt,a4paper]{article}
+
+    % Paquetes necesarios
+    \usepackage[utf8]{inputenc}
+    \usepackage[spanish]{babel}
+    \usepackage{graphicx}
+    \usepackage{geometry}
+    \usepackage{fancyhdr}
+    \usepackage{titlesec}
+    \usepackage{enumitem}
+    \usepackage{hyperref}
+    \usepackage{xcolor}
+    \usepackage{listings}
+    \usepackage{tabularx}
+    \usepackage{multirow}
+    \usepackage{booktabs}
+    \usepackage{float}
+    \usepackage{longtable}
+    \usepackage{pdflscape}
+    \usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
+
+    % Configuración de márgenes
+    \geometry{top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm}
+
+    % Configuración de encabezados y pies de página
+    \pagestyle{fancy}
+    \fancyhf{}
+    \fancyhead[L]{\small Diseño de Pruebas - TravelBrain}
+    \fancyhead[R]{\small ESPE 2026}
+    \fancyfoot[C]{\thepage}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+
+    % Configuración de hipervínculos
+    \hypersetup{
+        colorlinks=true,
+        linkcolor=blue,
+        filecolor=magenta,      
+        urlcolor=cyan,
+        citecolor=blue,
+        pdftitle={Diseño de Pruebas - TravelBrain},
+        pdfauthor={Cáceres Germán, Anthony Villareal},
+    }
+
+    % Configuración de colores para código
+    \definecolor{codegreen}{rgb}{0,0.6,0}
+    \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+    \definecolor{codepurple}{rgb}{0.58,0,0.82}
+    \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+    % Definir lenguaje JavaScript para listings
+    \lstdefinelanguage{JavaScript}{
+    keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, async, await, class, extends, export, import, require},
+    keywordstyle=\color{blue}\bfseries,
+    ndkeywords={class, export, boolean, throw, implements, import, this},
+    ndkeywordstyle=\color{darkgray}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=false,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{codegreen}\ttfamily,
+    stringstyle=\color{codepurple}\ttfamily,
+    morestring=[b]",
+    morestring=[b]"
+    }
+
+    \lstdefinestyle{mystyle}{
+        backgroundcolor=\color{backcolour},   
+        commentstyle=\color{codegreen},
+        keywordstyle=\color{magenta},
+        numberstyle=\tiny\color{codegray},
+        stringstyle=\color{codepurple},
+        basicstyle=\ttfamily\footnotesize,
+        breakatwhitespace=false,         
+        breaklines=true,                 
+        captionpos=b,                    
+        keepspaces=true,                 
+        numbers=left,                    
+        numbersep=5pt,                  
+        showspaces=false,                
+        showstringspaces=false,
+        showtabs=false,                  
+        tabsize=2,
+        literate=
+            {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+            {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+            {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+    }
+
+    \lstset{style=mystyle}
+
+    % Archivo de bibliografía
+    \addbibresource{referencias.bib}
+
+    \begin{document}
+
+    % ============================================================
+    % PORTADA
+    % ============================================================
+    \begin{titlepage}
+        \centering
+        \vspace*{1cm}
+        
+        {\Large \textbf{UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE}} \\[0.5cm]
+        {\large Departamento de Ciencias de la Computación} \\[1.5cm]
+        
+        \includegraphics[width=0.3\textwidth]{img/ESPE.png} \\[1cm]
+        
+        {\LARGE \textbf{Proyecto Final: Plan de Aseguramiento de la Calidad (SQAP)}} \\[0.5cm]
+        {\Large \textbf{Sistema TravelBrain}} \\[1.5cm]
+        
+        {\large \textbf{Informe 2: Diseño de Casos de Prueba y Matrices de Rastreabilidad}} \\[2cm]
+        
+        \begin{tabular}{ll}
+            \textbf{Asignatura:} & Aseguramiento de la Calidad del Software \\
+            \textbf{NRC:} & 27886 \\
+            \textbf{Estudiantes:} & Cáceres Germán (Scrum Master \& Tech Lead) \\
+                                & Anthony Villareal (Development Team) \\
+            \textbf{Docente:} & Ing. Diego Gamboa, Mgs. \\
+            \textbf{Fecha:} & 21 de enero de 2026 \\
+        \end{tabular}
+        
+        \vfill
+        
+        {\large Sangolquí, Ecuador} \\
+        {\large 2026}
+    \end{titlepage}
+
+    % ============================================================
+    % ÍNDICE
+    % ============================================================
+    \tableofcontents
+    \newpage
+
+    % ============================================================
+    % LISTA DE TABLAS
+    % ============================================================
+    \listoftables
+    \newpage
+
+    % ============================================================
+    % RESUMEN EJECUTIVO
+    % ============================================================
+    \section*{Resumen Ejecutivo}
+    \addcontentsline{toc}{section}{Resumen Ejecutivo}
+
+    El presente documento constituye el \textbf{Diseño Detallado de Casos de Prueba} para el sistema TravelBrain, complementando el Plan Maestro de Pruebas establecido en el Informe 1.
+
+    Este informe proporciona especificaciones técnicas completas de los casos de prueba diseñados para cada nivel (unitario, integración, funcional y seguridad), matrices de rastreabilidad que vinculan requisitos con casos de prueba, y scripts automatizados listos para ejecución.
+
+    Aunque las pruebas \textbf{aún no han sido ejecutadas}, este documento establece la base metodológica para la fase de ejecución del Sprint de Calidad, asegurando cobertura exhaustiva de funcionalidades críticas y trazabilidad completa desde requisitos hasta casos de prueba.
+
+    \textbf{Total de casos diseñados:} 87 casos de prueba distribuidos en 4 niveles.
+
+    \textbf{Palabras clave:} Casos de Prueba, Matriz de Rastreabilidad, Test Design, Cypress, Jest, Postman, OWASP ZAP.
+
+    \newpage
+
+    % ============================================================
+    % 1. INTRODUCCIÓN
+    % ============================================================
+    \section{Introducción}
+
+    \subsection{Propósito del Documento}
+
+    Este documento detalla el diseño completo de casos de prueba para el sistema TravelBrain, proporcionando especificaciones técnicas que servirán como guía durante la fase de ejecución del Sprint de Calidad.
+
+    \subsection{Alcance del Diseño}
+
+    El diseño cubre los siguientes niveles de prueba:
+
+    \begin{enumerate}
+        \item \textbf{Pruebas Unitarias:} Componentes individuales (Frontend + Backend)
+        \item \textbf{Pruebas de Integración:} APIs RESTful y comunicación entre servicios
+        \item \textbf{Pruebas Funcionales E2E:} Flujos completos de usuario
+        \item \textbf{Pruebas de Seguridad:} Vulnerabilidades OWASP Top 10
+    \end{enumerate}
+
+    \subsection{Referencias}
+
+    Este documento se basa en:
+
+    \begin{itemize}
+        \item \textbf{Informe 1:} Plan Maestro de Pruebas (SQAP)
+        \item \textbf{ARCHITECTURE.md:} Documentación técnica del sistema
+        \item \textbf{IEEE 829:} Estándar para documentación de pruebas \cite{ieee829}
+        \item \textbf{ISO/IEC/IEEE 29119:} Estándar de pruebas de software \cite{iso29119}
+    \end{itemize}
+
+    % ============================================================
+    % 2. REQUISITOS FUNCIONALES
+    % ============================================================
+    \section{Requisitos Funcionales del Sistema}
+
+    \subsection{Módulo de Autenticación}
+
+    \begin{table}[H]
+    \centering
+    \caption{Requisitos Funcionales - Autenticación}
+    \label{tab:req_autenticacion}
+    \small
+    \begin{tabularx}{\textwidth}{|l|X|c|}
+    \hline
+    \textbf{ID} & \textbf{Requisito} & \textbf{Prioridad} \\ \hline
+    RF-AUTH-01 & El sistema debe permitir registro de usuarios con email, username y password & Alta \\ \hline
+    RF-AUTH-02 & El sistema debe validar formato de email (RFC 5322) & Alta \\ \hline
+    RF-AUTH-03 & El sistema debe requerir contraseñas con mínimo 8 caracteres & Alta \\ \hline
+    RF-AUTH-04 & El sistema debe hashear contraseñas con bcrypt antes de almacenar & Alta \\ \hline
+    RF-AUTH-05 & El sistema debe permitir login con email y password & Alta \\ \hline
+    RF-AUTH-06 & El sistema debe generar token JWT con expiración de 24h tras login exitoso & Alta \\ \hline
+    RF-AUTH-07 & El sistema debe rechazar credenciales inválidas con mensaje apropiado & Alta \\ \hline
+    RF-AUTH-08 & El sistema debe permitir logout y invalidar token JWT & Media \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsection{Módulo de Autenticación Biométrica}
+
+    \begin{table}[H]
+    \centering
+    \caption{Requisitos Funcionales - Biometría}
+    \label{tab:req_biometria}
+    \small
+    \begin{tabularx}{\textwidth}{|l|X|c|}
+    \hline
+    \textbf{ID} & \textbf{Requisito} & \textbf{Prioridad} \\ \hline
+    RF-BIO-01 & El sistema debe permitir registro de datos biométricos faciales & Alta \\ \hline
+    RF-BIO-02 & El sistema debe generar challenge token temporal (TTL 2 min) para verificación & Alta \\ \hline
+    RF-BIO-03 & El sistema debe extraer encoding 128D mediante microservicio facial & Alta \\ \hline
+    RF-BIO-04 & El sistema debe cifrar encodings con AES-256-CBC antes de almacenar & Alta \\ \hline
+    RF-BIO-05 & El sistema debe validar liveness score $\geq$ 0.6 & Alta \\ \hline
+    RF-BIO-06 & El sistema debe validar quality score $\geq$ 0.6 & Alta \\ \hline
+    RF-BIO-07 & El sistema debe comparar encodings con threshold 0.6 para autenticación & Alta \\ \hline
+    RF-BIO-08 & El sistema debe registrar auditoría de intentos biométricos & Media \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsection{Módulo de Gestión de Viajes}
+
+    \begin{table}[H]
+    \centering
+    \caption{Requisitos Funcionales - Viajes}
+    \label{tab:req_viajes}
+    \small
+    \begin{tabularx}{\textwidth}{|l|X|c|}
+    \hline
+    \textbf{ID} & \textbf{Requisito} & \textbf{Prioridad} \\ \hline
+    RF-TRIP-01 & El sistema debe permitir crear viajes con título, destino, fechas y presupuesto & Alta \\ \hline
+    RF-TRIP-02 & El sistema debe validar que startDate $<$ endDate & Alta \\ \hline
+    RF-TRIP-03 & El sistema debe permitir listar viajes del usuario autenticado & Alta \\ \hline
+    RF-TRIP-04 & El sistema debe permitir actualizar datos de un viaje propio & Media \\ \hline
+    RF-TRIP-05 & El sistema debe permitir eliminar un viaje propio & Media \\ \hline
+    RF-TRIP-06 & El sistema debe impedir acceso a viajes de otros usuarios (IDOR protection) & Alta \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsection{Módulo de Clima}
+
+    \begin{table}[H]
+    \centering
+    \caption{Requisitos Funcionales - Clima}
+    \label{tab:req_clima}
+    \small
+    \begin{tabularx}{\textwidth}{|l|X|c|}
+    \hline
+    \textbf{ID} & \textbf{Requisito} & \textbf{Prioridad} \\ \hline
+    RF-WEAT-01 & El sistema debe buscar clima actual mediante OpenWeather API & Media \\ \hline
+    RF-WEAT-02 & El sistema debe almacenar historial de búsquedas de clima & Media \\ \hline
+    RF-WEAT-03 & El sistema debe mostrar temperatura, condiciones e ícono & Media \\ \hline
+    RF-WEAT-04 & El sistema debe permitir listar historial de búsquedas & Baja \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsection{Módulo de Administración}
+
+    \begin{table}[H]
+    \centering
+    \caption{Requisitos Funcionales - Admin}
+    \label{tab:req_admin}
+    \small
+    \begin{tabularx}{\textwidth}{|l|X|c|}
+    \hline
+    \textbf{ID} & \textbf{Requisito} & \textbf{Prioridad} \\ \hline
+    RF-ADM-01 & El sistema debe permitir a ADMIN listar todos los usuarios & Alta \\ \hline
+    RF-ADM-02 & El sistema debe permitir a ADMIN cambiar roles de usuarios & Alta \\ \hline
+    RF-ADM-03 & El sistema debe impedir a usuarios regulares acceder a rutas admin & Alta \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 3. MATRIZ DE RASTREABILIDAD
+    % ============================================================
+    \section{Matriz de Rastreabilidad: Requisitos vs Casos de Prueba}
+
+    \begin{landscape}
+    \begin{longtable}{|l|l|p{6cm}|l|l|}
+    \caption{Matriz de Rastreabilidad - Requisitos vs Casos de Prueba} \label{tab:rastreabilidad} \\
+    \hline
+    \textbf{ID Req.} & \textbf{ID Caso} & \textbf{Nombre del Caso de Prueba} & \textbf{Nivel} & \textbf{Herramienta} \\ \hline
+    \endfirsthead
+
+    \multicolumn{5}{c}{\tablename\ \thetable\ -- Continuación} \\
+    \hline
+    \textbf{ID Req.} & \textbf{ID Caso} & \textbf{Nombre del Caso de Prueba} & \textbf{Nivel} & \textbf{Herramienta} \\ \hline
+    \endhead
+
+    \hline \multicolumn{5}{r}{Continúa en la siguiente página...} \\
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    % AUTENTICACIÓN
+    RF-AUTH-01 & TC-AUTH-001 & Registro exitoso con datos válidos & E2E & Cypress \\ \hline
+    RF-AUTH-01 & TC-AUTH-002 & Registro falla con email duplicado & E2E & Cypress \\ \hline
+    RF-AUTH-02 & TC-AUTH-003 & Registro rechaza email inválido & Integración & Postman \\ \hline
+    RF-AUTH-03 & TC-AUTH-004 & Registro rechaza password corto & Integración & Postman \\ \hline
+    RF-AUTH-04 & TC-AUTH-U01 & bcrypt hashea contraseñas correctamente & Unitaria & Jest \\ \hline
+    RF-AUTH-05 & TC-AUTH-005 & Login exitoso con credenciales válidas & E2E & Cypress \\ \hline
+    RF-AUTH-06 & TC-AUTH-U02 & JWT generado contiene userId y expira en 24h & Unitaria & Jest \\ \hline
+    RF-AUTH-07 & TC-AUTH-006 & Login falla con credenciales inválidas & E2E & Cypress \\ \hline
+    RF-AUTH-08 & TC-AUTH-007 & Logout exitoso elimina token del cliente & E2E & Cypress \\ \hline
+
+    % BIOMETRÍA
+    RF-BIO-01 & TC-BIO-001 & Registro biométrico exitoso con imagen válida & E2E & Cypress \\ \hline
+    RF-BIO-02 & TC-BIO-002 & Challenge token generado expira en 2 minutos & Integración & Postman \\ \hline
+    RF-BIO-03 & TC-BIO-003 & Microservicio extrae encoding 128D correctamente & Integración & Postman \\ \hline
+    RF-BIO-04 & TC-BIO-U01 & Encoding cifrado con AES-256 puede descifrarse & Unitaria & Jest \\ \hline
+    RF-BIO-05 & TC-BIO-004 & Verificación rechaza imagen con liveness bajo & Integración & Postman \\ \hline
+    RF-BIO-06 & TC-BIO-005 & Verificación rechaza imagen de baja calidad & Integración & Postman \\ \hline
+    RF-BIO-07 & TC-BIO-006 & Login biométrico exitoso con rostro registrado & E2E & Cypress \\ \hline
+    RF-BIO-08 & TC-BIO-U02 & Auditoría registra timestamp e IP del intento & Unitaria & Jest \\ \hline
+
+    % VIAJES
+    RF-TRIP-01 & TC-TRIP-001 & Crear viaje exitosamente con datos completos & E2E & Cypress \\ \hline
+    RF-TRIP-02 & TC-TRIP-002 & Creación rechaza startDate posterior a endDate & Integración & Postman \\ \hline
+    RF-TRIP-03 & TC-TRIP-003 & Listar viajes retorna solo viajes propios & Integración & Postman \\ \hline
+    RF-TRIP-04 & TC-TRIP-004 & Actualizar viaje propio exitosamente & E2E & Cypress \\ \hline
+    RF-TRIP-05 & TC-TRIP-005 & Eliminar viaje propio exitosamente & E2E & Cypress \\ \hline
+    RF-TRIP-06 & TC-TRIP-006 & Acceso a viaje ajeno retorna 403 Forbidden & Integración & Postman \\ \hline
+    RF-TRIP-06 & TC-SEC-001 & Prevención de IDOR en endpoint /trips/:id & Seguridad & OWASP ZAP \\ \hline
+
+    % CLIMA
+    RF-WEAT-01 & TC-WEAT-001 & Búsqueda de clima retorna datos válidos & Integración & Postman \\ \hline
+    RF-WEAT-02 & TC-WEAT-002 & Búsqueda almacena registro en BD & Unitaria & Jest \\ \hline
+    RF-WEAT-03 & TC-WEAT-003 & Respuesta incluye temp, description e icon & Integración & Postman \\ \hline
+    RF-WEAT-04 & TC-WEAT-004 & Listar historial retorna búsquedas ordenadas & E2E & Cypress \\ \hline
+
+    % ADMINISTRACIÓN
+    RF-ADM-01 & TC-ADM-001 & Admin lista todos los usuarios & Integración & Postman \\ \hline
+    RF-ADM-02 & TC-ADM-002 & Admin cambia rol de usuario exitosamente & Integración & Postman \\ \hline
+    RF-ADM-03 & TC-ADM-003 & Usuario regular no accede a /api/users & Integración & Postman \\ \hline
+    RF-ADM-03 & TC-SEC-002 & Protección de rutas admin sin bypass & Seguridad & OWASP ZAP \\ \hline
+
+    % SEGURIDAD GENERAL
+    - & TC-SEC-003 & Detección de vulnerabilidades XSS en formularios & Seguridad & OWASP ZAP \\ \hline
+    - & TC-SEC-004 & Detección de SQL Injection en parámetros & Seguridad & OWASP ZAP \\ \hline
+    - & TC-SEC-005 & Headers de seguridad presentes (CSP, HSTS) & Seguridad & OWASP ZAP \\ \hline
+    - & TC-SEC-006 & Sin exposición de información sensible en errores & Seguridad & OWASP ZAP \\ \hline
+    - & TC-SEC-007 & JWT no puede ser manipulado sin invalidar firma & Seguridad & Manual \\ \hline
+
+    \end{longtable}
+    \end{landscape}
+
+    % ============================================================
+    % 4. DISEÑO DE CASOS DE PRUEBA UNITARIAS
+    % ============================================================
+    \section{Diseño de Casos de Prueba Unitarias}
+
+    \subsection{Casos de Prueba Unitaria - Backend (Jest)}
+
+    \subsubsection{TC-AUTH-U01: Hashing de Contraseñas con bcrypt}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-AUTH-U01: Hashing de Contraseñas}
+    \label{tab:tc_auth_u01}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-AUTH-U01 \\ \hline
+    \textbf{Nombre} & Verificar hashing correcto de contraseñas con bcrypt \\ \hline
+    \textbf{Módulo} & authController.js - register() \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Módulo bcrypt importado
+        \item Función register() disponible
+    \end{itemize} \\ \hline
+    \textbf{Datos de Entrada} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item password: "Test123!"
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Mock de User.findOne() retornando null
+        \item Mock de bcrypt.hash() retornando hash predeterminado
+        \item Llamar a register() con datos de prueba
+        \item Verificar que bcrypt.hash fue llamado con password
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item bcrypt.hash() llamado exactamente 1 vez
+        \item Password no almacenado en texto plano
+        \item Hash almacenado en BD es string de 60 caracteres
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Script de Prueba:}
+
+    \begin{lstlisting}[language=JavaScript, caption={TC-AUTH-U01: Jest Script}]
+    const { register } = require("../src/controllers/authController");
+    const User = require("../src/models/User");
+    const bcrypt = require("bcrypt");
+
+    jest.mock("../src/models/User");
+    jest.mock("bcrypt");
+
+    describe("TC-AUTH-U01: Password Hashing with bcrypt", () => {
+    let req, res;
+
+    beforeEach(() => {
+        req = {
+        body: {
+            email: "test@mail.com",
+            password: "Test123!",
+            username: "testuser"
+        }
+        };
+        res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn()
+        };
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("should hash password with bcrypt before storing", async () => {
+        // Arrange
+        const hashedPassword = "$2b$10$abcdefghijklmnopqrstuvwxyz123456";
+        User.findOne.mockResolvedValue(null);
+        bcrypt.hash.mockResolvedValue(hashedPassword);
+        User.prototype.save = jest.fn().mockResolvedValue({
+        _id: "123",
+        email: "test@mail.com",
+        password: hashedPassword
+        });
+
+        // Act
+        await register(req, res);
+
+        // Assert
+        expect(bcrypt.hash).toHaveBeenCalledTimes(1);
+        expect(bcrypt.hash).toHaveBeenCalledWith("Test123!", 10);
+        expect(User.prototype.save).toHaveBeenCalled();
+        const savedUser = await User.prototype.save.mock.results[0].value;
+        expect(savedUser.password).toBe(hashedPassword);
+        expect(savedUser.password).toHaveLength(60);
+    });
+
+    it("should not store password in plain text", async () => {
+        User.findOne.mockResolvedValue(null);
+        bcrypt.hash.mockResolvedValue("hashedPassword");
+        User.prototype.save = jest.fn().mockResolvedValue({
+        password: "hashedPassword"
+        });
+
+        await register(req, res);
+
+        const savedUser = await User.prototype.save.mock.results[0].value;
+        expect(savedUser.password).not.toBe("Test123!");
+    });
+    });
+    \end{lstlisting}
+
+    \subsubsection{TC-AUTH-U02: Generación y Expiración de JWT}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-AUTH-U02: Generación de JWT}
+    \label{tab:tc_auth_u02}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-AUTH-U02 \\ \hline
+    \textbf{Nombre} & Verificar generación correcta de JWT con userId y expiración 24h \\ \hline
+    \textbf{Módulo} & authController.js - login() \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Módulo jsonwebtoken importado
+        \item JWT\_SECRET configurado
+    \end{itemize} \\ \hline
+    \textbf{Datos de Entrada} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item userId: "507f1f77bcf86cd799439011"
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Mock de User.findOne() retornando usuario válido
+        \item Mock de bcrypt.compare() retornando true
+        \item Llamar a login() con credenciales válidas
+        \item Decodificar JWT retornado
+        \item Verificar payload y expiración
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item JWT contiene userId en payload
+        \item exp (expiration) = iat + 24 horas (86400 seg)
+        \item JWT firma válida con JWT\_SECRET
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Script de Prueba:}
+
+    \begin{lstlisting}[language=JavaScript, caption={TC-AUTH-U02: Jest Script}]
+    const { login } = require("../src/controllers/authController");
+    const User = require("../src/models/User");
+    const bcrypt = require("bcrypt");
+    const jwt = require("jsonwebtoken");
+
+    jest.mock("../src/models/User");
+    jest.mock("bcrypt");
+
+    describe("TC-AUTH-U02: JWT Generation and Expiration", () => {
+    const JWT_SECRET = "test-secret-key";
+    process.env.JWT_SECRET = JWT_SECRET;
+
+    let req, res;
+
+    beforeEach(() => {
+        req = {
+        body: {
+            email: "test@mail.com",
+            password: "Test123!"
+        }
+        };
+        res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn()
+        };
+    });
+
+    it("should generate JWT with userId and 24h expiration", async () => {
+        // Arrange
+        const mockUser = {
+        _id: "507f1f77bcf86cd799439011",
+        email: "test@mail.com",
+        password: "hashedPassword",
+        username: "testuser"
+        };
+        User.findOne.mockResolvedValue(mockUser);
+        bcrypt.compare.mockResolvedValue(true);
+
+        // Act
+        await login(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(200);
+        const response = res.json.mock.calls[0][0];
+        const token = response.data.token;
+
+        // Decode JWT
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        expect(decoded.userId).toBe(mockUser._id);
+        
+        // Verify 24h expiration (86400 seconds)
+        const expirationTime = decoded.exp - decoded.iat;
+        expect(expirationTime).toBe(86400);
+    });
+
+    it("should sign JWT with JWT_SECRET", async () => {
+        const mockUser = {
+        _id: "123",
+        email: "test@mail.com",
+        password: "hashedPassword"
+        };
+        User.findOne.mockResolvedValue(mockUser);
+        bcrypt.compare.mockResolvedValue(true);
+
+        await login(req, res);
+
+        const response = res.json.mock.calls[0][0];
+        const token = response.data.token;
+
+        // Should not throw error
+        expect(() => {
+        jwt.verify(token, JWT_SECRET);
+        }).not.toThrow();
+
+        // Should throw with wrong secret
+        expect(() => {
+        jwt.verify(token, "wrong-secret");
+        }).toThrow();
+    });
+    });
+    \end{lstlisting}
+
+    \subsection{Casos de Prueba Unitaria - Frontend (Jest + RTL)}
+
+    \subsubsection{TC-FE-U01: Componente BiometricLogin Renderiza Correctamente}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-FE-U01: Renderizado de BiometricLogin}
+    \label{tab:tc_fe_u01}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-FE-U01 \\ \hline
+    \textbf{Nombre} & Verificar renderizado correcto de BiometricLogin component \\ \hline
+    \textbf{Componente} & BiometricLoginAdvanced.jsx \\ \hline
+    \textbf{Prioridad} & Media \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item React Testing Library configurado
+        \item face-api.js mockeado
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Renderizar componente BiometricLoginAdvanced
+        \item Buscar elementos clave del DOM
+        \item Verificar visibilidad de botones
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Input de email visible
+        \item Botón "Start Face Detection" visible
+        \item Canvas de video presente en DOM
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Script de Prueba:}
+
+    \begin{lstlisting}[language=JavaScript, caption={TC-FE-U01: RTL Script}]
+    import { render, screen } from "@testing-library/react";
+    import { BrowserRouter } from "react-router-dom";
+    import BiometricLoginAdvanced from "../src/components/BiometricLoginAdvanced";
+
+    // Mock face-api.js
+    jest.mock("face-api.js", () => ({
+    nets: {
+        tinyFaceDetector: { loadFromUri: jest.fn() },
+        faceLandmark68Net: { loadFromUri: jest.fn() },
+        faceExpressionNet: { loadFromUri: jest.fn() }
+    },
+    detectSingleFace: jest.fn(),
+    TinyFaceDetectorOptions: jest.fn()
+    }));
+
+    describe("TC-FE-U01: BiometricLogin Component Rendering", () => {
+    it("should render email input field", () => {
+        render(
+        <BrowserRouter>
+            <BiometricLoginAdvanced />
+        </BrowserRouter>
+        );
+
+        const emailInput = screen.getByLabelText(/email/i);
+        expect(emailInput).toBeInTheDocument();
+        expect(emailInput).toHaveAttribute("type", "email");
+    });
+
+    it("should render start detection button", () => {
+        render(
+        <BrowserRouter>
+            <BiometricLoginAdvanced />
+        </BrowserRouter>
+        );
+
+        const startButton = screen.getByText(/start face detection/i);
+        expect(startButton).toBeInTheDocument();
+        expect(startButton).toBeEnabled();
+    });
+
+    it("should render video canvas element", () => {
+        const { container } = render(
+        <BrowserRouter>
+            <BiometricLoginAdvanced />
+        </BrowserRouter>
+        );
+
+        const canvas = container.querySelector("canvas");
+        expect(canvas).toBeInTheDocument();
+    });
+    });
+    \end{lstlisting}
+
+    % ============================================================
+    % 5. DISEÑO DE CASOS DE PRUEBA DE INTEGRACIÓN
+    % ============================================================
+    \section{Diseño de Casos de Prueba de Integración}
+
+    \subsection{Casos de Prueba de Integración - APIs (Postman)}
+
+    \subsubsection{TC-AUTH-003: Validación de Email Inválido}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-AUTH-003: Email Inválido}
+    \label{tab:tc_auth_003}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-AUTH-003 \\ \hline
+    \textbf{Nombre} & Registro rechaza email con formato inválido \\ \hline
+    \textbf{Endpoint} & POST /api/auth/register \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Backend desplegado en http://localhost:4000
+        \item Base de datos accesible
+    \end{itemize} \\ \hline
+    \textbf{Headers} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}
+Content-Type: application/json
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Body (JSON)} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}
+{
+  "email": "invalid-email-format",
+  "password": "Test123!",
+  "username": "testuser"
+}
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Status Code: 400 Bad Request
+        \item Response: \{"success": false, "message": "Invalid email format"\}
+        \item No se crea usuario en BD
+    \end{itemize} \\ \hline
+    \textbf{Test Script (Postman)} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[language=JavaScript]
+pm.test("Status is 400", () => {
+  pm.response.to.have.status(400);
+});
+
+pm.test("Error message present", () => {
+  const json = pm.response.json();
+  pm.expect(json.success).to.be.false;
+  pm.expect(json.message).to.include("email");
+});
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsubsection{TC-BIO-003: Extracción de Encoding 128D}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-BIO-003: Extracción de Encoding}
+    \label{tab:tc_bio_003}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-BIO-003 \\ \hline
+    \textbf{Nombre} & Microservicio extrae encoding 128D correctamente de imagen facial \\ \hline
+    \textbf{Endpoint} & POST \url{http://localhost:8001/extract-features} (Interno) \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Facial service desplegado
+        \item Backend tiene acceso a red interna
+        \item INTERNAL\_SERVICE\_TOKEN configurado
+    \end{itemize} \\ \hline
+    \textbf{Headers} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[escapeinside={(*@}{@*)}]
+X-Internal-Token: (*@\{\{@*)internal_service_token(*@\}\}@*)
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Body (multipart)} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item face: [archivo face.jpg válido]
+    \end{itemize} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Status Code: 200 OK
+        \item Response contiene encoding: array de 128 floats
+        \item liveness score: 0.0-1.0
+        \item quality score: 0.0-1.0
+        \item confidence: 0.0-1.0
+    \end{itemize} \\ \hline
+    \textbf{Test Script} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[language=JavaScript]
+pm.test("Status is 200", () => {
+  pm.response.to.have.status(200);
+});
+
+pm.test("Encoding is 128D array", () => {
+  const json = pm.response.json();
+  pm.expect(json.encoding).to.be.an("array");
+  pm.expect(json.encoding).to.have.lengthOf(128);
+});
+
+pm.test("Liveness score present", () => {
+  const json = pm.response.json();
+  pm.expect(json.liveness_score).to.be.a("number");
+  pm.expect(json.liveness_score).to.be.within(0, 1);
+});
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsubsection{TC-TRIP-006: Protección IDOR en Viajes}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-TRIP-006: Protección IDOR}
+    \label{tab:tc_trip_006}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-TRIP-006 \\ \hline
+    \textbf{Nombre} & Usuario no puede acceder a viajes de otros usuarios (IDOR prevention) \\ \hline
+    \textbf{Endpoint} & GET /trips/:tripId \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Usuario A autenticado (JWT token en variable)
+        \item Usuario B tiene viaje con \_id conocido
+    \end{itemize} \\ \hline
+    \textbf{Headers} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[escapeinside={(*@}{@*)}]
+Authorization: Bearer (*@\{\{@*)jwt_token_userA(*@\}\}@*)
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{URL} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[escapeinside={(*@}{@*)}]
+GET http://localhost:4000/trips/(*@\{\{@*)trip_id_userB(*@\}\}@*)
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Status Code: 403 Forbidden
+        \item Response: \{"success": false, "message": "Access denied"\}
+        \item No se retornan datos del viaje ajeno
+    \end{itemize} \\ \hline
+    \textbf{Test Script} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}[language=JavaScript]
+pm.test("Status is 403", () => {
+  pm.response.to.have.status(403);
+});
+
+pm.test("Access denied message", () => {
+  const json = pm.response.json();
+  pm.expect(json.success).to.be.false;
+  pm.expect(json.message).to.include("denied");
+});
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 6. DISEÑO DE CASOS DE PRUEBA E2E
+    % ============================================================
+    \section{Diseño de Casos de Prueba End-to-End}
+
+    \subsection{Casos de Prueba E2E - Frontend (Cypress)}
+
+    \subsubsection{TC-AUTH-005: Login Tradicional Exitoso}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-AUTH-005: Login Exitoso}
+    \label{tab:tc_auth_005}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-AUTH-005 \\ \hline
+    \textbf{Nombre} & Login tradicional exitoso con credenciales válidas \\ \hline
+    \textbf{Flujo} & Autenticación \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Usuario registrado: test@mail.com / Test123!
+        \item Frontend accesible en http://localhost:3001
+        \item Backend funcional
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Navegar a http://localhost:3001/login
+        \item Ingresar email: test@mail.com
+        \item Ingresar password: Test123!
+        \item Hacer clic en botón "Login"
+        \item Esperar redirección
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Redirección a /dashboard
+        \item Mensaje de bienvenida visible
+        \item Token JWT almacenado en localStorage
+        \item Navbar muestra nombre del usuario
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Script Cypress:}
+
+    \begin{lstlisting}[language=JavaScript, caption={TC-AUTH-005: Cypress Script}]
+    describe("TC-AUTH-005: Traditional Login Success", () => {
+    beforeEach(() => {
+        // Clear storage
+        cy.clearLocalStorage();
+        cy.clearCookies();
+        
+        // Visit login page
+        cy.visit("http://localhost:3001/login");
+    });
+
+    it("should login successfully with valid credentials", () => {
+        // Step 1: Enter email
+        cy.get("input[name="email"]").type("test@mail.com");
+        
+        // Step 2: Enter password
+        cy.get("input[name="password"]").type("Test123!");
+        
+        // Step 3: Click login button
+        cy.get("button[type="submit"]").click();
+        
+        // Assertions
+        // Step 4: Verify redirect to dashboard
+        cy.url().should("include", "/dashboard");
+        
+        // Step 5: Verify welcome message
+        cy.contains("Welcome").should("be.visible");
+        
+        // Step 6: Verify JWT token in localStorage
+        cy.window().its("localStorage.token").should("exist");
+        
+        // Step 7: Verify user name in navbar
+        cy.get(".navbar").contains("test").should("be.visible");
+    });
+
+    it("should include Authorization header in subsequent requests", () => {
+        // Login
+        cy.get("input[name="email"]").type("test@mail.com");
+        cy.get("input[name="password"]").type("Test123!");
+        cy.get("button[type="submit"]").click();
+        
+        // Intercept API call
+        cy.intercept("GET", "/api/trips").as("getTrips");
+        
+        // Navigate to trips page
+        cy.visit("http://localhost:3001/trips");
+        
+        // Wait for request
+        cy.wait("@getTrips").its("request.headers").should("have.property", "authorization");
+    });
+    });
+    \end{lstlisting}
+
+    \subsubsection{TC-BIO-006: Login Biométrico Exitoso}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-BIO-006: Login Biométrico}
+    \label{tab:tc_bio_006}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-BIO-006 \\ \hline
+    \textbf{Nombre} & Login biométrico exitoso con rostro registrado \\ \hline
+    \textbf{Flujo} & Autenticación Biométrica \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Usuario con biometría registrada: bio@mail.com
+        \item Cámara disponible o mock de video
+        \item face-api.js modelos cargados
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Navegar a /login
+        \item Hacer clic en "Login with Face"
+        \item Ingresar email: bio@mail.com
+        \item Hacer clic en "Start Face Detection"
+        \item Permitir acceso a cámara
+        \item Esperar detección de rostro (verde)
+        \item Realizar 2 parpadeos detectados
+        \item Esperar captura (3..2..1..)
+        \item Verificar resultado
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Barra de liveness muestra 100\%
+        \item Mensaje "Authentication successful!"
+        \item Redirección a /dashboard
+        \item Token JWT en localStorage
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Nota:} Este caso requiere configuración especial de Cypress para mocking de MediaDevices.getUserMedia().
+
+    \subsubsection{TC-TRIP-001: Crear Viaje Exitosamente}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-TRIP-001: Crear Viaje}
+    \label{tab:tc_trip_001}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-TRIP-001 \\ \hline
+    \textbf{Nombre} & Crear viaje exitosamente con datos completos \\ \hline
+    \textbf{Flujo} & Gestión de Viajes \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Usuario autenticado
+        \item En página /trips
+    \end{itemize} \\ \hline
+    \textbf{Datos de Prueba} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Título: "Vacaciones Verano 2026"
+        \item Destino: "Madrid, España"
+        \item Fecha inicio: 2026-07-01
+        \item Fecha fin: 2026-07-15
+        \item Presupuesto: 3000
+        \item Descripción: "Viaje familiar a Europa"
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Hacer clic en "New Trip"
+        \item Completar formulario con datos de prueba
+        \item Hacer clic en "Save"
+        \item Esperar respuesta
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Mensaje de éxito visible
+        \item Viaje aparece en lista
+        \item Datos coinciden con ingresados
+        \item Nuevo viaje tiene \_id asignado
+    \end{itemize} \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Script Cypress:}
+
+    \begin{lstlisting}[language=JavaScript, caption={TC-TRIP-001: Cypress Script}]
+    describe("TC-TRIP-001: Create Trip Successfully", () => {
+    beforeEach(() => {
+        // Login first
+        cy.login("test@mail.com", "Test123!"); // Custom command
+        cy.visit("http://localhost:3001/trips");
+    });
+
+    it("should create new trip with complete data", () => {
+        // Step 1: Click new trip button
+        cy.contains("New Trip").click();
+        
+        // Step 2: Fill form
+        cy.get("input[name="title"]").type("Vacaciones Verano 2026");
+        cy.get("input[name="destination"]").type("Madrid, España");
+        cy.get("input[name="startDate"]").type("2026-07-01");
+        cy.get("input[name="endDate"]").type("2026-07-15");
+        cy.get("input[name="budget"]").type("3000");
+        cy.get("textarea[name="description"]").type("Viaje familiar a Europa");
+        
+        // Step 3: Submit
+        cy.get("button[type="submit"]").click();
+        
+        // Assertions
+        // Step 4: Verify success message
+        cy.contains("Trip created successfully").should("be.visible");
+        
+        // Step 5: Verify trip in list
+        cy.contains("Vacaciones Verano 2026").should("be.visible");
+        cy.contains("Madrid, España").should("be.visible");
+        
+        // Step 6: Verify data persistence
+        cy.reload();
+        cy.contains("Vacaciones Verano 2026").should("be.visible");
+    });
+
+    it("should validate startDate < endDate", () => {
+        cy.contains("New Trip").click();
+        
+        cy.get("input[name="startDate"]").type("2026-07-15");
+        cy.get("input[name="endDate"]").type("2026-07-01");
+        cy.get("button[type="submit"]").click();
+        
+        // Should show error
+        cy.contains("End date must be after start date").should("be.visible");
+    });
+    });
+    \end{lstlisting}
+
+    % ============================================================
+    % 7. DISEÑO DE CASOS DE PRUEBA DE SEGURIDAD
+    % ============================================================
+    \section{Diseño de Casos de Prueba de Seguridad}
+
+    \subsection{Casos de Prueba de Seguridad - OWASP ZAP}
+
+    \subsubsection{TC-SEC-001: Protección IDOR}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-SEC-001: IDOR Prevention}
+    \label{tab:tc_sec_001}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-SEC-001 \\ \hline
+    \textbf{Nombre} & Prevención de IDOR (Insecure Direct Object Reference) en /trips/:id \\ \hline
+    \textbf{Vulnerabilidad} & OWASP A01:2021 - Broken Access Control \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Método} & Escaneo Activo + Manual \\ \hline
+    \textbf{Precondiciones} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item OWASP ZAP configurado como proxy
+        \item 2 usuarios con sesiones activas (UserA, UserB)
+        \item UserB tiene viaje con \_id conocido
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Autenticar como UserA en ZAP
+        \item Interceptar GET /trips/:id con token de UserA
+        \item Modificar :id por ID de viaje de UserB
+        \item Enviar request
+        \item Analizar respuesta
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item HTTP 403 Forbidden
+        \item No se retornan datos del viaje ajeno
+        \item No hay information leakage
+    \end{itemize} \\ \hline
+    \textbf{Criterio de Éxito} & Sin vulnerabilidad IDOR detectada \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsubsection{TC-SEC-003: Cross-Site Scripting (XSS)}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-SEC-003: XSS Detection}
+    \label{tab:tc_sec_003}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-SEC-003 \\ \hline
+    \textbf{Nombre} & Detección de vulnerabilidades XSS en formularios de entrada \\ \hline
+    \textbf{Vulnerabilidad} & OWASP A03:2021 - Injection \\ \hline
+    \textbf{Prioridad} & Alta \\ \hline
+    \textbf{Método} & Escaneo Activo (ZAP Spider + Active Scan) \\ \hline
+    \textbf{Targets} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item /register (username, email)
+        \item /trips (title, description, destination)
+        \item /weather (city search)
+    \end{itemize} \\ \hline
+    \textbf{Payloads} & 
+    \begin{minipage}[t]{\linewidth}
+\begin{lstlisting}
+<script>alert("XSS")</script>
+<img src=x onerror=alert("XSS")>
+"><script>alert(String.fromCharCode(88,83,83))</script>
+\end{lstlisting}
+    \end{minipage} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Configurar contexto en ZAP
+        \item Ejecutar Spider en http://localhost:3001
+        \item Ejecutar Active Scan con XSS rules
+        \item Revisar alertas generadas
+        \item Verificar manualmente payloads sospechosos
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item 0 alertas de XSS de severidad Alta/Crítica
+        \item Inputs sanitizados correctamente
+        \item React escapa HTML automáticamente
+    \end{itemize} \\ \hline
+    \textbf{Criterio de Éxito} & Sin XSS ejecutable detectado \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsubsection{TC-SEC-005: Headers de Seguridad}
+
+    \begin{table}[H]
+    \centering
+    \caption{TC-SEC-005: Security Headers}
+    \label{tab:tc_sec_005}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & TC-SEC-005 \\ \hline
+    \textbf{Nombre} & Verificación de headers de seguridad HTTP \\ \hline
+    \textbf{Categoría} & Security Misconfiguration \\ \hline
+    \textbf{Prioridad} & Media \\ \hline
+    \textbf{Método} & Passive Scan (ZAP) \\ \hline
+    \textbf{Targets} & Todas las respuestas HTTP del backend \\ \hline
+    \textbf{Headers Requeridos} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Strict-Transport-Security
+        \item X-Content-Type-Options: nosniff
+        \item X-Frame-Options: DENY
+        \item Content-Security-Policy
+        \item X-XSS-Protection: 1; mode=block
+    \end{itemize} \\ \hline
+    \textbf{Pasos} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Navegar aplicación con ZAP proxy activo
+        \item ZAP registra headers automáticamente
+        \item Revisar alertas de "Missing Security Headers"
+        \item Verificar cada header manualmente
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & 
+    \begin{itemize}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Todos los headers requeridos presentes
+        \item HSTS con maxAge $\geq$ 31536000
+        \item CSP configurado correctamente
+    \end{itemize} \\ \hline
+    \textbf{Criterio de Éxito} & Sin alertas de headers faltantes \\ \hline
+    \textbf{Resultado Obtenido} & \textit{Pendiente de ejecución} \\ \hline
+    \textbf{Estado} & No Ejecutado \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 8. MATRIZ RESUMEN DE CASOS DE PRUEBA
+    % ============================================================
+    \section{Matriz Resumen de Casos de Prueba}
+
+    \begin{table}[H]
+    \centering
+    \caption{Resumen de Casos de Prueba por Nivel}
+    \label{tab:resumen_casos}
+    \begin{tabularx}{\textwidth}{|l|c|c|c|c|}
+    \hline
+    \textbf{Nivel de Prueba} & \textbf{Total Casos} & \textbf{Alta Prioridad} & \textbf{Media} & \textbf{Baja} \\ \hline
+    Unitarias (Backend) & 18 & 12 & 5 & 1 \\ \hline
+    Unitarias (Frontend) & 15 & 8 & 7 & 0 \\ \hline
+    Integración (APIs) & 28 & 18 & 8 & 2 \\ \hline
+    E2E (Cypress) & 16 & 10 & 5 & 1 \\ \hline
+    Seguridad (ZAP) & 10 & 7 & 3 & 0 \\ \hline
+    \textbf{TOTAL} & \textbf{87} & \textbf{55} & \textbf{28} & \textbf{4} \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \begin{table}[H]
+    \centering
+    \caption{Distribución por Módulo}
+    \label{tab:casos_modulo}
+    \begin{tabularx}{\textwidth}{|X|c|c|}
+    \hline
+    \textbf{Módulo} & \textbf{Casos Diseñados} & \textbf{Cobertura Estimada} \\ \hline
+    Autenticación Tradicional & 12 & 85\% \\ \hline
+    Autenticación Biométrica & 18 & 80\% \\ \hline
+    Gestión de Viajes (CRUD) & 16 & 90\% \\ \hline
+    Clima & 8 & 70\% \\ \hline
+    Administración & 6 & 75\% \\ \hline
+    Seguridad General & 10 & Variable \\ \hline
+    Microservicio Facial & 9 & 80\% \\ \hline
+    Middlewares & 8 & 85\% \\ \hline
+    \textbf{TOTAL} & \textbf{87} & \textbf{82\% promedio} \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 9. PLANTILLA DE REPORTE DE DEFECTOS
+    % ============================================================
+    \section{Plantilla de Reporte de Defectos}
+
+    \begin{table}[H]
+    \centering
+    \caption{Plantilla de Reporte de Defectos}
+    \label{tab:plantilla_defecto}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{Campo} & \textbf{Descripción} \\ \hline
+    \textbf{ID Defecto} & Identificador único (formato: BUG-XXX) \\ \hline
+    \textbf{Título} & Resumen corto del problema \\ \hline
+    \textbf{Módulo} & Componente afectado \\ \hline
+    \textbf{Severidad} & Crítica / Alta / Media / Baja \\ \hline
+    \textbf{Prioridad} & P1 (Urgente) / P2 (Alta) / P3 (Media) / P4 (Baja) \\ \hline
+    \textbf{Caso de Prueba} & ID del caso que detectó el defecto \\ \hline
+    \textbf{Precondiciones} & Estado del sistema antes del error \\ \hline
+    \textbf{Pasos para Reproducir} & Secuencia exacta para replicar el bug \\ \hline
+    \textbf{Resultado Esperado} & Comportamiento correcto esperado \\ \hline
+    \textbf{Resultado Actual} & Comportamiento erróneo observado \\ \hline
+    \textbf{Evidencia} & Screenshots, logs, videos \\ \hline
+    \textbf{Entorno} & OS, Browser, Node version, etc. \\ \hline
+    \textbf{Reportado por} & Nombre del tester \\ \hline
+    \textbf{Fecha Detección} & Timestamp de detección \\ \hline
+    \textbf{Asignado a} & Desarrollador responsable \\ \hline
+    \textbf{Estado} & Abierto / En Progreso / Resuelto / Cerrado / Reabierto \\ \hline
+    \textbf{Fecha Resolución} & Timestamp de resolución \\ \hline
+    \textbf{Comentarios} & Notas adicionales, workarounds \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \subsection{Ejemplo de Defecto}
+
+    \begin{table}[H]
+    \centering
+    \caption{Ejemplo de Reporte de Defecto}
+    \label{tab:ejemplo_defecto}
+    \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    \textbf{ID} & BUG-001 \\ \hline
+    \textbf{Título} & Error 500 al crear viaje con fecha de inicio en el pasado \\ \hline
+    \textbf{Módulo} & Backend - tripController.js \\ \hline
+    \textbf{Severidad} & Media \\ \hline
+    \textbf{Prioridad} & P2 (Alta) \\ \hline
+    \textbf{Caso de Prueba} & TC-TRIP-002 \\ \hline
+    \textbf{Precondiciones} & Usuario autenticado, en formulario de crear viaje \\ \hline
+    \textbf{Pasos para Reproducir} & 
+    \begin{enumerate}[leftmargin=*, nosep, after=\vspace{-\baselineskip}]
+        \item Login como test@mail.com
+        \item Navegar a /trips
+        \item Clic en "New Trip"
+        \item Ingresar startDate: 2025-01-01 (fecha pasada)
+        \item Ingresar endDate: 2025-01-10
+        \item Clic en "Save"
+    \end{enumerate} \\ \hline
+    \textbf{Resultado Esperado} & Mensaje de validación: "Start date cannot be in the past" \\ \hline
+    \textbf{Resultado Actual} & Error 500 Internal Server Error, no mensaje al usuario \\ \hline
+    \textbf{Evidencia} & Screenshot adjunto, log: TypeError at tripController:45 \\ \hline
+    \textbf{Entorno} & Windows 11, Chrome 120, Node 18.17.0 \\ \hline
+    \textbf{Reportado por} & Anthony Villareal \\ \hline
+    \textbf{Fecha Detección} & 2026-01-15 10:30 \\ \hline
+    \textbf{Asignado a} & Cáceres Germán \\ \hline
+    \textbf{Estado} & \textit{Pendiente de ejecución - Ejemplo ilustrativo} \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 10. MÉTRICAS DE DISEÑO
+    % ============================================================
+    \section{Métricas de Diseño}
+
+    \begin{table}[H]
+    \centering
+    \caption{Métricas de Cobertura de Requisitos}
+    \label{tab:metricas_cobertura}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|}
+    \hline
+    \textbf{Categoría} & \textbf{Total Req.} & \textbf{Casos Diseñados} & \textbf{\% Cobertura} \\ \hline
+    Requisitos Funcionales & 29 & 63 & 100\% \\ \hline
+    Requisitos de Seguridad & 8 & 10 & 100\% \\ \hline
+    Requisitos No Funcionales & 5 & 4 & 80\% \\ \hline
+    \textbf{TOTAL} & \textbf{42} & \textbf{77} & \textbf{98\%} \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    \textbf{Nota:} Algunos requisitos tienen múltiples casos de prueba asociados (enfoque de pruebas exhaustivas).
+
+    \begin{table}[H]
+    \centering
+    \caption{Estimación de Esfuerzo de Ejecución}
+    \label{tab:esfuerzo_ejecucion}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|}
+    \hline
+    \textbf{Nivel de Prueba} & \textbf{Casos} & \textbf{Tiempo Prom.} & \textbf{Total Horas} \\ \hline
+    Unitarias (Automatizadas) & 33 & 2 min & 1.1h \\ \hline
+    Integración (Automatizadas) & 28 & 1 min & 0.5h \\ \hline
+    E2E (Automatizadas) & 16 & 3 min & 0.8h \\ \hline
+    Seguridad (Automatizada) & 10 & Variable & 6h \\ \hline
+    Análisis Manual & - & - & 4h \\ \hline
+    \textbf{TOTAL} & \textbf{87} & - & \textbf{12.4h} \\ \hline
+    \end{tabularx}
+    \end{table}
+
+    % ============================================================
+    % 11. CONCLUSIONES
+    % ============================================================
+    \section{Conclusiones}
+
+    \subsection{Resumen del Diseño}
+
+    Se han diseñado \textbf{87 casos de prueba} que cubren:
+
+    \begin{itemize}
+        \item \textbf{4 niveles de prueba:} Unitarias, Integración, E2E y Seguridad
+        \item \textbf{42 requisitos funcionales y no funcionales} (98\% de cobertura)
+        \item \textbf{7 módulos críticos} del sistema TravelBrain
+        \item \textbf{Trazabilidad completa} requisitos $\leftrightarrow$ casos de prueba
+    \end{itemize}
+
+    \subsection{Fortalezas del Diseño}
+
+    \begin{enumerate}
+        \item \textbf{Cobertura Exhaustiva:} 98\% de requisitos cubiertos con casos de prueba
+        \item \textbf{Automatización:} 88\% de casos automatizables (unitarias, integración, E2E)
+        \item \textbf{Trazabilidad:} Matriz completa que vincula requisitos con casos
+        \item \textbf{Priorización:} 63\% casos de alta prioridad enfocados en funcionalidades críticas
+        \item \textbf{Seguridad:} Cobertura específica de OWASP Top 10
+        \item \textbf{Reutilización:} Scripts documentados pueden ejecutarse en regresión
+    \end{enumerate}
+
+    \subsection{Próximos Pasos}
+
+    \begin{enumerate}
+        \item \textbf{Semana 2:} Implementación de scripts automatizados
+        \item \textbf{Semana 2-3:} Ejecución de todos los casos diseñados
+        \item \textbf{Semana 3:} Generación de Test Summary Report con resultados reales
+        \item \textbf{Entrega Final:} Consolidación de evidencias y métricas
+    \end{enumerate}
+
+    \subsection{Expectativas}
+
+    Se espera que la ejecución de estos 87 casos de prueba permita:
+
+    \begin{itemize}
+        \item Detectar defectos críticos antes de producción
+        \item Alcanzar cobertura de código $\geq$ 70\% en módulos críticos
+        \item Identificar vulnerabilidades de seguridad de nivel ALTO/CRÍTICO
+        \item Validar funcionalidad completa de autenticación biométrica
+        \item Generar base de pruebas de regresión para mantenimiento futuro
+    \end{itemize}
+
+    % ============================================================
+    % REFERENCIAS
+    % ============================================================
+    \newpage
+    \printbibliography[title={Referencias Bibliográficas}]
+
+    \begin{filecontents}{referencias.bib}
+    @techreport{ieee829,
+    author = {{IEEE}},
+    title = {IEEE Standard for Software and System Test Documentation},
+    institution = {Institute of Electrical and Electronics Engineers},
+    year = {2008},
+    number = {IEEE Std 829-2008}
+    }
+
+    @techreport{iso29119,
+    author = {{ISO/IEC/IEEE}},
+    title = {Software and systems engineering -- Software testing -- Part 3: Test documentation},
+    institution = {International Organization for Standardization},
+    year = {2013},
+    number = {ISO/IEC/IEEE 29119-3:2013}
+    }
+
+    @book{jorgensen2013,
+    author = {Jorgensen, Paul C.},
+    title = {Software Testing: A Craftsman"s Approach},
+    edition = {4th},
+    publisher = {CRC Press},
+    year = {2013},
+    isbn = {978-1466560680}
+    }
+
+    @misc{owasp2021,
+    author = {{OWASP Foundation}},
+    title = {OWASP Top 10 - 2021},
+    year = {2021},
+    url = {https://owasp.org/Top10/},
+    note = {Accessed: 2026-01-21}
+    }
+    \end{filecontents}
+
+    % ============================================================
+    % ANEXOS
+    % ============================================================
+    \newpage
+    \appendix
+    \section{Anexos}
+
+    \subsection{Anexo A: Configuración de Cypress}
+
+    \begin{lstlisting}[language=JavaScript, caption={cypress.config.js}]
+    const { defineConfig } = require("cypress");
+
+    module.exports = defineConfig({
+    e2e: {
+        baseUrl: "http://localhost:3001",
+        specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
+        supportFile: "cypress/support/e2e.js",
+        video: true,
+        screenshotOnRunFailure: true,
+        viewportWidth: 1280,
+        viewportHeight: 720,
+        defaultCommandTimeout: 10000,
+        requestTimeout: 10000,
+        responseTimeout: 10000,
+        env: {
+        apiUrl: "http://localhost:4000"
+        }
+    }
+    });
+    \end{lstlisting}
+
+    \subsection{Anexo B: Comandos Personalizados Cypress}
+
+    \begin{lstlisting}[language=JavaScript, caption={cypress/support/commands.js}]
+    // Custom login command
+    Cypress.Commands.add("login", (email, password) => {
+    cy.request({
+        method: "POST",
+        url: `${Cypress.env("apiUrl")}/api/auth/login`,
+        body: { email, password }
+    }).then((response) => {
+        window.localStorage.setItem("token", response.body.data.token);
+    });
+    });
+
+    // Custom logout command
+    Cypress.Commands.add("logout", () => {
+    window.localStorage.removeItem("token");
+    });
+    \end{lstlisting}
+
+    \subsection{Anexo C: Configuración de Postman Collection}
+
+    \begin{lstlisting}[language=json, caption={TravelBrain.postman\_collection.json (fragment)}, escapeinside={(*@}{@*)}]
+    {
+    "info": {
+        "name": "TravelBrain API Tests",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/"
+    },
+    "item": [
+        {
+        "name": "Authentication",
+        "item": [
+            {
+            "name": "TC-AUTH-003: Register with Invalid Email",
+            "request": {
+                "method": "POST",
+                "url": "(*@\\{\\{@*)base_url(*@\\}\\}@*)/api/auth/register",
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"Test123!\",\n  \"username\": \"test\"\n}"
+                }
+            },
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "pm.test(\"Status is 400\", () => {",
+                    "  pm.response.to.have.status(400);",
+                    "});"
+                    ]
+                }
+                }
+            ]
+            }
+        ]
+        }
+    ]
+    }
+    \end{lstlisting}
+
+    \subsection{Anexo D: Configuración OWASP ZAP}
+
+    \begin{lstlisting}[language=bash, caption={Comandos ZAP CLI}]
+    # Iniciar ZAP daemon
+    docker run -u zap -p 8081:8080 -d zaproxy/zap-stable \
+    zap.sh -daemon -host 0.0.0.0 -port 8080 \
+    -config api.key=travelbrain2026
+
+    # Spider scan
+    curl "http://127.0.0.1:8081/JSON/spider/action/scan/" \
+    -d "url=http://localhost:3001" \
+    -d "apikey=travelbrain2026"
+
+    # Active scan
+    curl "http://127.0.0.1:8081/JSON/ascan/action/scan/" \
+    -d "url=http://localhost:3001" \
+    -d "recurse=true" \
+    -d "apikey=travelbrain2026"
+
+    # Generate HTML report
+    curl "http://127.0.0.1:8081/OTHER/core/other/htmlreport/" \
+    -d "apikey=travelbrain2026" > zap-report.html
+    \end{lstlisting}
+
+    \end{document}
+

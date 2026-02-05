@@ -4,6 +4,234 @@
 
 Este documento describe la implementación completa de un sistema de autenticación biométrica facial de alta seguridad para la aplicación TravelBrain, siguiendo las mejores prácticas de la industria y cumpliendo con estándares de seguridad empresariales.
 
+## 🔒 Autenticación Multi-Factor (MFA) Obligatoria
+
+**IMPORTANTE:** TravelBrain implementa autenticación multi-factor (MFA) de **3 factores** obligatorios:
+
+### Factores de Autenticación
+
+1. ✅ **Algo que sabes - Email**: Identificador del usuario
+2. ✅ **Algo que sabes - Contraseña**: Credencial secreta (hasheada con bcrypt)
+3. ✅ **Algo que eres - Biometría Facial**: Verificación biométrica con prueba de vida
+
+### Flujo de Autenticación MFA (Login)
+
+```
+┌─────────────────────────────────────────────┐
+│  PASO 1: Validación de Credenciales        │
+│                                             │
+│  Usuario ingresa:                           │
+│    - Email                                  │
+│    - Contraseña                             │
+│                                             │
+│  Backend valida (/api/auth/validate-creds):│
+│    ✓ Usuario existe                         │
+│    ✓ Cuenta activa                          │
+│    ✓ Contraseña correcta (bcrypt)          │
+│    ✓ Tiene biometría registrada            │
+│                                             │
+│  ❌ Si falla → Login rechazado              │
+│  ✅ Si exitoso → Continúa a Paso 2          │
+└─────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────┐
+│  PASO 2: Verificación Biométrica Facial    │
+│                                             │
+│  Sistema automáticamente:                   │
+│    1. Solicita desafío (challenge/nonce)   │
+│    2. Activa cámara                         │
+│    3. Detecta rostro del usuario            │
+│    4. Ejecuta prueba de vida (parpadeo)    │
+│    5. Captura imagen facial                 │
+│    6. Verifica con biometría almacenada     │
+│                                             │
+│  ❌ Si falla → Vuelve a Paso 1              │
+│  ✅ Si exitoso → Acceso concedido + JWT     │
+└─────────────────────────────────────────────┘
+```
+
+### Flujo de Registro
+
+```
+┌─────────────────────────────────────────────┐
+│  PASO 1: Crear Cuenta                      │
+│                                             │
+│  Usuario proporciona:                       │
+│    - Email (único)                          │
+│    - Username                               │
+│    - Nombre completo                        │
+│    - Contraseña (mín. 6 caracteres)        │
+│                                             │
+│  Backend (/api/auth/register):              │
+│    - Hashea contraseña con bcrypt           │
+│    - Crea usuario en MongoDB                │
+│    - Genera token temporal                  │
+└─────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────┐
+│  PASO 2: Registro Biométrico (OBLIGATORIO) │
+│                                             │
+│  Usuario DEBE:                              │
+│    1. Capturar su rostro                    │
+│    2. Completar prueba de vida              │
+│    3. Sistema almacena vector biométrico    │
+│                                             │
+│  ❌ NO puede omitir este paso               │
+│  ✅ Al completar → Redirige a Login         │
+└─────────────────────────────────────────────┘
+```
+
+### Implementación Técnica
+
+#### Validación de Rostro Único
+
+**Nueva característica implementada:** El sistema ahora verifica que cada rostro sea único en la base de datos antes de permitir su registro.
+
+**Flujo de Validación:**
+1. Usuario intenta registrar su biometría facial
+2. Sistema extrae características faciales (encoding de 128 dimensiones)
+3. **Verificación de unicidad:**
+   - Obtiene todas las biometrías activas registradas
+   - Descifra cada encoding almacenado
+   - Compara el nuevo rostro con cada uno usando distancia euclidiana
+   - Umbral: distancia < 0.45 = mismo rostro
+4. Si encuentra coincidencia:
+   - Rechaza el registro con error 409 (Conflict)
+   - Registra intento en auditoría
+   - Muestra mensaje al usuario
+5. Si no hay coincidencia:
+   - Procede con el registro normal
+
+**Ventajas:**
+- ✅ Previene cuentas duplicadas de la misma persona
+- ✅ Aumenta la seguridad del sistema
+- ✅ Evita fraude de identidad
+- ✅ Garantiza one-person-one-account
+
+**Implementación Backend:**
+```javascript
+// En registerBiometric()
+const existingBiometrics = await FacialBiometric.find({ 
+  userId: { $ne: userId },
+  isActive: true 
+});
+
+for (const existingBio of existingBiometrics) {
+  const decryptedEncoding = FacialBiometric.decryptEncoding(...);
+  
+  const comparison = await axios.post(
+    `${FACIAL_SERVICE_URL}/compare-faces`,
+    {
+      encoding1: newEncoding,
+      encoding2: decryptedEncoding,
+      threshold: 0.45
+    }
+  );
+  
+  if (comparison.match) {
+    return res.status(409).json({
+      message: 'Este rostro ya está registrado'
+    });
+  }
+}
+```
+
+#### Backend - Endpoints
+
+1. **`POST /api/auth/validate-credentials`** (Nuevo - Paso 1 de MFA)
+   ```javascript
+   // Valida credenciales sin generar token completo
+   Request: { email, password }
+   Response: { 
+     success: true, 
+     hasBiometric: true,
+     requiresBiometric: true 
+   }
+   ```
+
+2. **`POST /api/biometric/challenge`** (Paso 2 de MFA - Inicio)
+   ```javascript
+   // Solicita desafío para proceso biométrico
+   Request: { email, operation: 'LOGIN' }
+   Response: { 
+     challengeToken: "...",
+     expiresIn: 120
+   }
+   ```
+
+3. **`POST /api/biometric/verify`** (Paso 2 de MFA - Completar)
+   ```javascript
+   // Verifica rostro y genera token JWT
+   Request: FormData { face: [image], challengeToken }
+   Response: { 
+     token: "JWT...",
+     user: {...}
+   }
+   ```
+
+4. **`POST /api/auth/register`** (Registro con contraseña)
+   ```javascript
+   // Crea usuario con contraseña hasheada
+   Request: { email, username, name, password }
+   Response: { 
+     token: "temporal",
+     user: {...}
+   }
+   ```
+
+#### Frontend - Componentes Actualizados
+
+1. **Login.jsx** - Flujo MFA de 2 pasos
+   ```jsx
+   // Estado inicial: Muestra formulario de credenciales
+   step = 'credentials'
+   
+   // Al validar credenciales:
+   - Llama a /api/auth/validate-credentials
+   - Si exitoso: step = 'biometric'
+   - Abre modal BiometricLoginAdvanced con email pre-validado
+   
+   // Modal biométrico:
+   - Recibe prop email={validatedEmail}
+   - Auto-inicia proceso biométrico
+   - Al completar: saveAuth() y navigate('/dashboard')
+   ```
+
+2. **BiometricLoginAdvanced.jsx** - Soporte MFA
+   ```jsx
+   // Props actualizados:
+   BiometricLoginAdvanced({ 
+     email: preValidatedEmail,  // Nuevo: Email pre-validado
+     onSuccess, 
+     onError 
+   })
+   
+   // Comportamiento:
+   - Si tiene email pre-validado:
+     * Oculta campo de entrada de email
+     * Muestra indicador "MFA Step 2/2"
+     * Auto-inicia challenge al detectar rostro
+   
+   - Si NO tiene email:
+     * Muestra campo de entrada (modo standalone)
+     * Usuario ingresa email manualmente
+   ```
+
+3. **Register.jsx** - Registro con contraseña
+   ```jsx
+   // Formulario incluye:
+   - Email
+   - Username
+   - Nombre
+   - Contraseña (validación mín. 6 caracteres)
+   - Confirmar contraseña
+   
+   // Al completar registro:
+   - Modal biométrico OBLIGATORIO
+   - NO se puede omitir
+   - Al terminar → Redirige a Login
+   ```
+
 ---
 
 ## 🏗️ Arquitectura del Sistema

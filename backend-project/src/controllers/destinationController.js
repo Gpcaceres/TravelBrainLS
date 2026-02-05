@@ -1,4 +1,5 @@
 const Destination = require('../models/Destination');
+const { invalidateCache } = require('../utils/cache');
 
 /**
  * Get all destinations
@@ -51,6 +52,11 @@ exports.createDestination = async (req, res) => {
     });
 
     const savedDestination = await destination.save();
+    
+    // Invalidate cache after creating
+    invalidateCache('/destinations');
+    invalidateCache('destinations');
+    
     res.status(201).json(savedDestination);
   } catch (error) {
     console.error('Error creating destination:', error);
@@ -83,6 +89,11 @@ exports.updateDestination = async (req, res) => {
 
     const updatedDestination = await destination.save();
     console.log('Destination updated successfully');
+    
+    // Invalidate cache after updating
+    invalidateCache('/destinations');
+    invalidateCache('destinations');
+    
     res.json(updatedDestination);
   } catch (error) {
     console.error('Error updating destination:', error);
@@ -106,6 +117,11 @@ exports.deleteDestination = async (req, res) => {
 
     await destination.deleteOne();
     console.log('Destination deleted successfully');
+    
+    // Invalidate cache after deleting
+    invalidateCache('/destinations');
+    invalidateCache('destinations');
+    
     res.json({ message: 'Destination deleted successfully', deletedId: req.params.id });
   } catch (error) {
     console.error('Error deleting destination:', error);

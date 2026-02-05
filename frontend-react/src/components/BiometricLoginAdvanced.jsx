@@ -11,8 +11,13 @@ import './BiometricLoginAdvanced.css';
  * - Análisis de movimiento de cabeza
  * - Detección de múltiples rostros
  * - Análisis de expresiones
+ * 
+ * Props:
+ * - email (opcional): Email pre-validado para MFA. Si se proporciona, salta la entrada de email
+ * - onSuccess: Callback cuando la autenticación es exitosa
+ * - onError: Callback cuando hay un error
  */
-const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
+const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -22,12 +27,12 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
   const lastEyeStateRef = useRef('open');
   const isProcessingBlinksRef = useRef(false);
   const stepRef = useRef('loading'); // Ref para el step actual sin problemas de closure
-  const emailRef = useRef(''); // Ref para el email
+  const emailRef = useRef(preValidatedEmail || ''); // Ref para el email
   const challengeTokenRef = useRef(''); // Ref para el token de desafío
 
   const [step, setStep] = useState('loading'); // loading, idle, ready, liveness-test, countdown, capturing, analyzing, success, error
   const [message, setMessage] = useState('Cargando modelos de IA...');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(preValidatedEmail || '');
   const [challengeToken, setChallengeToken] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -78,7 +83,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
         
         setModelsLoaded(true);
         updateStep('idle');
-        setMessage('Modelos cargados. Iniciando cámara...');
+        setMessage(preValidatedEmail ? 'Modelos cargados. Iniciando autenticación MFA...' : 'Modelos cargados. Iniciando cámara...');
         
         // Iniciar cámara
         await startCamera();
@@ -94,7 +99,7 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [preValidatedEmail]);
 
   /**
    * Iniciar cámara
@@ -363,6 +368,16 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
   };
 
   /**
+   * Auto-iniciar challenge si hay email pre-validado y rostro detectado
+   */
+  useEffect(() => {
+    if (preValidatedEmail && faceDetected && step === 'ready' && !loading && !challengeToken) {
+      console.log('[BiometricLogin MFA] Auto-iniciando challenge con email pre-validado:', preValidatedEmail);
+      requestChallenge();
+    }
+  }, [preValidatedEmail, faceDetected, step, loading, challengeToken]);
+
+  /**
    * Solicitar desafío
    */
   const requestChallenge = async () => {
@@ -527,6 +542,15 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
       console.log('[BiometricLogin] Respuesta del backend:', data);
 
       if (!response.ok) {
+        // Caso especial: cuenta bloqueada por múltiples intentos (423 Locked)
+        if (response.status === 423) {
+          const remainingMinutes = data.remainingSeconds ? Math.ceil(data.remainingSeconds / 60) : 15;
+          throw new Error(
+            `🔒 Cuenta bloqueada por ${remainingMinutes} minuto(s) debido a ${data.failedAttempts || 3} intentos fallidos. ` +
+            `Por favor, espere antes de intentar nuevamente.`
+          );
+        }
+        // Otros errores
         throw new Error(data.message || 'Error verificando identidad');
       }
 
@@ -620,8 +644,8 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
           {loading && <div className="loading-spinner"></div>}
         </div>
 
-        {/* Input de email */}
-        {(step === 'idle' || step === 'ready') && (
+        {/* Input de email - Solo mostrar si NO hay email pre-validado */}
+        {!preValidatedEmail && (step === 'idle' || step === 'ready') && (
           <div className="email-section">
             <label htmlFor="email-input">Correo Electrónico:</label>
             <input
@@ -636,9 +660,28 @@ const BiometricLoginAdvanced = ({ onSuccess, onError }) => {
           </div>
         )}
 
+        {/* Info MFA si hay email pre-validado */}
+        {preValidatedEmail && (step === 'idle' || step === 'ready' || step === 'requesting-challenge' || step === 'instructions' || step === 'liveness-test') && (
+          <div className="mfa-info" style={{
+            padding: '1rem',
+            background: 'rgba(71, 245, 154, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid #47F59A',
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: '0 0 0.5rem 0', color: '#47F59A', fontSize: '0.9rem', fontWeight: '600' }}>
+              🔐 Multi-Factor Authentication - Step 2/2
+            </p>
+            <p style={{ margin: 0, color: '#D0D0D0', fontSize: '0.85rem' }}>
+              Autenticando: {preValidatedEmail}
+            </p>
+          </div>
+        )}
+
         {/* Botones */}
         <div className="action-buttons">
-          {step === 'ready' && (
+          {step === 'ready' && !preValidatedEmail && (
             <button
               onClick={requestChallenge}
               disabled={!email || !faceDetected || loading}

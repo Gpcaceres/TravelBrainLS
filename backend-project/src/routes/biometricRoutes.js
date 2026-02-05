@@ -66,6 +66,18 @@ router.post(
 );
 
 /**
+ * @route   POST /api/biometric/validate-face
+ * @desc    Validar rostro sin registrar (para pre-registro)
+ * @access  Public
+ * @body    FormData { file: File }
+ */
+router.post(
+  '/validate-face',
+  upload.single('face'),
+  biometricController.validateFace
+);
+
+/**
  * @route   GET /api/biometric/status
  * @desc    Obtener estado de biometría del usuario
  * @access  Private

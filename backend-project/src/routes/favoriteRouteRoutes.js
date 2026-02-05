@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const favoriteRouteController = require('../controllers/favoriteRouteController');
 const { authenticate } = require('../middlewares/auth');
+const { cacheMiddleware } = require('../middlewares/cache');
 
 /**
  * Favorite Route Routes
@@ -9,10 +10,10 @@ const { authenticate } = require('../middlewares/auth');
  */
 
 // GET /favorite-routes - Get all favorite routes
-router.get('/favorite-routes', authenticate, favoriteRouteController.getAllFavoriteRoutes);
+router.get('/favorite-routes', authenticate, cacheMiddleware(300), favoriteRouteController.getAllFavoriteRoutes);
 
 // GET /favorite-routes/:id - Get favorite route by ID
-router.get('/favorite-routes/:id', authenticate, favoriteRouteController.getFavoriteRouteById);
+router.get('/favorite-routes/:id', authenticate, cacheMiddleware(300), favoriteRouteController.getFavoriteRouteById);
 
 // POST /favorite-routes - Create new favorite route
 router.post('/favorite-routes', authenticate, favoriteRouteController.createFavoriteRoute);

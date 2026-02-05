@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const destinationController = require('../controllers/destinationController');
 const { authenticate } = require('../middlewares/auth');
+const { cacheMiddleware } = require('../middlewares/cache');
 
 /**
  * Destination Routes
@@ -9,10 +10,10 @@ const { authenticate } = require('../middlewares/auth');
  */
 
 // GET /destinations - Get all destinations
-router.get('/destinations', authenticate, destinationController.getAllDestinations);
+router.get('/destinations', authenticate, cacheMiddleware(300), destinationController.getAllDestinations);
 
 // GET /destinations/:id - Get destination by ID
-router.get('/destinations/:id', authenticate, destinationController.getDestinationById);
+router.get('/destinations/:id', authenticate, cacheMiddleware(300), destinationController.getDestinationById);
 
 // POST /destinations - Create new destination
 router.post('/destinations', authenticate, destinationController.createDestination);

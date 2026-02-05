@@ -70,6 +70,11 @@ const facialBiometricSchema = new mongoose.Schema(
     lastFailedAttempt: {
       type: Date
     },
+    // Timestamp hasta cuando la cuenta está bloqueada
+    lockedUntil: {
+      type: Date,
+      default: null
+    },
     // Estado de la biometría
     isActive: {
       type: Boolean,
@@ -180,17 +185,14 @@ facialBiometricSchema.statics.decryptEncoding = function(
 
 /**
  * Método de instancia: Incrementar contador de intentos fallidos
+ * Si alcanza 3 intentos fallidos, bloquear por 15 minutos
  */
 facialBiometricSchema.methods.incrementFailedAttempts = async function() {
   this.failedAttempts += 1;
-  this.lastFailedAttempt = new Date();
   
-  // Si hay más de 5 intentos fallidos en 15 minutos, desactivar temporalmente
-  if (this.failedAttempts >= 5) {
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    if (this.lastFailedAttempt > fifteenMinutesAgo) {
-      this.isActive = false;
-    }
+  if (this.failedAttempts >= 3) {
+    this.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos desde ahora
+    console.log(`[Security] Usuario bloqueado hasta: ${this.lockedUntil}`);
   }
   
   await this.save();
@@ -202,8 +204,41 @@ facialBiometricSchema.methods.incrementFailedAttempts = async function() {
 facialBiometricSchema.methods.resetFailedAttempts = async function() {
   this.failedAttempts = 0;
   this.lastFailedAttempt = null;
+  this.lockedUntil = null;
   this.isActive = true;
   await this.save();
+};
+
+/**
+ * Método de instancia: Verificar si la cuenta está bloqueada
+ * @returns {boolean} - True si está bloqueada
+ */
+facialBiometricSchema.methods.isLocked = function() {
+  // Si no hay lockedUntil, no está bloqueada
+  if (!this.lockedUntil) {
+    return false;
+  }
+  
+  // Si lockedUntil ya pasó, desbloquear automáticamente
+  if (this.lockedUntil < new Date()) {
+    return false;
+  }
+  
+  // Está bloqueada
+  return true;
+};
+
+/**
+ * Método de instancia: Obtener tiempo restante de bloqueo en segundos
+ * @returns {number} - Segundos restantes de bloqueo, 0 si no está bloqueada
+ */
+facialBiometricSchema.methods.getRemainingLockTime = function() {
+  if (!this.isLocked()) {
+    return 0;
+  }
+  
+  const remaining = Math.ceil((this.lockedUntil - new Date()) / 1000);
+  return remaining > 0 ? remaining : 0;
 };
 
 /**
