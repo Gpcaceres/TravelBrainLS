@@ -29,6 +29,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
   const stepRef = useRef('loading'); // Ref para el step actual sin problemas de closure
   const emailRef = useRef(preValidatedEmail || ''); // Ref para el email
   const challengeTokenRef = useRef(''); // Ref para el token de desafío
+  const livenessTimerRef = useRef(null); // Ref para el timer de 25 segundos
 
   const [step, setStep] = useState('loading'); // loading, idle, ready, liveness-test, countdown, capturing, analyzing, success, error
   const [message, setMessage] = useState('Cargando modelos de IA...');
@@ -36,6 +37,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
   const [challengeToken, setChallengeToken] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [livenessTimeRemaining, setLivenessTimeRemaining] = useState(25); // Contador de 25 segundos
 
   // Estados de detección
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -98,6 +100,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
 
     return () => {
       stopCamera();
+      stopLivenessTimer();
     };
   }, [preValidatedEmail]);
 
@@ -326,6 +329,9 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
         setMessage('¡Prueba de vida completada! Preparando captura...');
         setLivenessScore(0.9); // Alta confianza
         
+        // Detener el timer de 25 segundos
+        stopLivenessTimer();
+        
         // IMPORTANTE: Cambiar el step antes de iniciar countdown
         setTimeout(() => {
           console.log('[BiometricLogin] Ejecutando startCountdown()');
@@ -455,6 +461,64 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
     isProcessingBlinksRef.current = false;
     
     console.log('[BiometricLogin] Refs reseteados - blinkCount:', blinkCountRef.current);
+    
+    // Iniciar contador de 25 segundos
+    startLivenessTimer();
+  };
+
+  /**
+   * Iniciar timer de 25 segundos para la prueba de vida
+   */
+  const startLivenessTimer = () => {
+    // Limpiar timer anterior si existe
+    if (livenessTimerRef.current) {
+      clearInterval(livenessTimerRef.current);
+    }
+    
+    setLivenessTimeRemaining(25);
+    console.log('[BiometricLogin] Iniciando timer de 25 segundos');
+    
+    livenessTimerRef.current = setInterval(() => {
+      setLivenessTimeRemaining((prevTime) => {
+        const newTime = prevTime - 1;
+        
+        if (newTime <= 0) {
+          // Tiempo agotado
+          console.log('[BiometricLogin] ⏰ Tiempo agotado para la prueba de vida');
+          clearInterval(livenessTimerRef.current);
+          livenessTimerRef.current = null;
+          handleLivenessTimeout();
+          return 0;
+        }
+        
+        // Advertencia en los últimos 5 segundos
+        if (newTime <= 5 && newTime > 0) {
+          console.log('[BiometricLogin] ⚠️ Solo quedan', newTime, 'segundos');
+        }
+        
+        return newTime;
+      });
+    }, 1000);
+  };
+
+  /**
+   * Detener timer de prueba de vida
+   */
+  const stopLivenessTimer = () => {
+    if (livenessTimerRef.current) {
+      console.log('[BiometricLogin] Deteniendo timer de liveness');
+      clearInterval(livenessTimerRef.current);
+      livenessTimerRef.current = null;
+    }
+  };
+
+  /**
+   * Manejar timeout de prueba de vida
+   */
+  const handleLivenessTimeout = () => {
+    updateStep('error');
+    setMessage('⏰ Tiempo agotado. No se detectaron los 2 parpadeos a tiempo. Por favor, inténtelo nuevamente.');
+    if (onError) onError('liveness_timeout');
   };
 
   /**
@@ -581,6 +645,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
    * Reiniciar
    */
   const restart = () => {
+    stopLivenessTimer();
     updateStep('ready');
     setMessage('Listo para iniciar. Ingrese su email.');
     setEmail('');
@@ -588,6 +653,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
     setBlinkCount(0);
     setLivenessScore(0);
     setCountdown(0);
+    setLivenessTimeRemaining(25);
   };
 
   return (
@@ -617,6 +683,16 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
               <div className="eye-animation">👁️</div>
               <p>Parpadee 2 veces</p>
               <div className="blink-counter">{blinkCount}/2</div>
+              <div className="liveness-timer" style={{
+                marginTop: '1rem',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: livenessTimeRemaining <= 5 ? '#ff4444' : '#47F59A',
+                textShadow: livenessTimeRemaining <= 5 ? '0 0 10px rgba(255, 68, 68, 0.8)' : 'none',
+                animation: livenessTimeRemaining <= 5 ? 'pulse 0.5s ease-in-out infinite' : 'none'
+              }}>
+                ⏱️ {livenessTimeRemaining}s
+              </div>
             </div>
           )}
 

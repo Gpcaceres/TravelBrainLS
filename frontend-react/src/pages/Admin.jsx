@@ -66,7 +66,8 @@ function Admin() {
       // Build query params
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: usersPerPage.toString()
+        limit: usersPerPage.toString(),
+        _t: Date.now().toString() // Cache buster
       });
       
       if (searchTerm) {
@@ -116,11 +117,17 @@ function Admin() {
       const response = await api.patch(`/users/${userId}/activate`);
       setSuccessMessage(response.data.message);
       setTimeout(() => setSuccessMessage(''), 3000);
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error al activar usuario:', err);
-      setError(err.response?.data?.message || 'Error al activar usuario');
-      setTimeout(() => setError(''), 3000);
+      if (err.response?.status === 404) {
+        setError('Usuario no encontrado. Actualizando lista...');
+        setTimeout(() => setError(''), 3000);
+        await fetchData(); // Recargar lista si el usuario no existe
+      } else {
+        setError(err.response?.data?.message || 'Error al activar usuario');
+        setTimeout(() => setError(''), 3000);
+      }
     } finally {
       setUpdatingUserId(null);
     }
@@ -132,11 +139,17 @@ function Admin() {
       const response = await api.patch(`/users/${userId}/deactivate`);
       setSuccessMessage(response.data.message);
       setTimeout(() => setSuccessMessage(''), 3000);
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error al desactivar usuario:', err);
-      setError(err.response?.data?.message || 'Error al desactivar usuario');
-      setTimeout(() => setError(''), 3000);
+      if (err.response?.status === 404) {
+        setError('Usuario no encontrado. Actualizando lista...');
+        setTimeout(() => setError(''), 3000);
+        await fetchData(); // Recargar lista si el usuario no existe
+      } else {
+        setError(err.response?.data?.message || 'Error al desactivar usuario');
+        setTimeout(() => setError(''), 3000);
+      }
     } finally {
       setUpdatingUserId(null);
     }
@@ -150,11 +163,17 @@ function Admin() {
       const response = await api.delete(`/users/${userId}`);
       setSuccessMessage(response.data.message || 'Usuario eliminado');
       setTimeout(() => setSuccessMessage(''), 3000);
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error al eliminar usuario:', err);
-      setError(err.response?.data?.message || 'Error al eliminar usuario');
-      setTimeout(() => setError(''), 3000);
+      if (err.response?.status === 404) {
+        setError('Usuario no encontrado. Actualizando lista...');
+        setTimeout(() => setError(''), 3000);
+        await fetchData(); // Recargar lista si el usuario no existe
+      } else {
+        setError(err.response?.data?.message || 'Error al eliminar usuario');
+        setTimeout(() => setError(''), 3000);
+      }
     } finally {
       setDeletingUserId(null);
     }
@@ -173,11 +192,17 @@ function Admin() {
       const response = await api.patch(`/users/${userId}/role`, { role: newRole });
       setSuccessMessage(response.data.message);
       setTimeout(() => setSuccessMessage(''), 3000);
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error al cambiar rol:', err);
-      setError(err.response?.data?.message || 'Error al cambiar rol de usuario');
-      setTimeout(() => setError(''), 3000);
+      if (err.response?.status === 404) {
+        setError('Usuario no encontrado. Actualizando lista...');
+        setTimeout(() => setError(''), 3000);
+        await fetchData(); // Recargar lista si el usuario no existe
+      } else {
+        setError(err.response?.data?.message || 'Error al cambiar rol de usuario');
+        setTimeout(() => setError(''), 3000);
+      }
     }
   };
 

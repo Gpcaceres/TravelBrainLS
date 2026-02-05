@@ -15,6 +15,7 @@ const BiometricLogin = ({ onSuccess, onError }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const blinkTimeoutRef = useRef(null);
 
   const [step, setStep] = useState('idle'); // idle, requesting-challenge, capturing, analyzing, success, error
   const [message, setMessage] = useState('');
@@ -24,6 +25,7 @@ const BiometricLogin = ({ onSuccess, onError }) => {
   const [blinkDetected, setBlinkDetected] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(25);
 
   // Estados para detección de parpadeo
   const [eyeOpenFrames, setEyeOpenFrames] = useState(0);
@@ -128,9 +130,56 @@ const BiometricLogin = ({ onSuccess, onError }) => {
     setStep('liveness-test');
     setMessage('Por favor, parpadee lentamente 2 veces');
     setBlinkDetected(false);
+    setTimeRemaining(25);
+
+    // Iniciar temporizador de 25 segundos
+    startBlinkTimeout();
 
     // Iniciar detección de parpadeo
     detectBlinks();
+  };
+
+  /**
+   * Iniciar temporizador de 25 segundos para la prueba de parpadeo
+   */
+  const startBlinkTimeout = () => {
+    let secondsLeft = 25;
+    setTimeRemaining(secondsLeft);
+    
+    // Actualizar contador cada segundo
+    const countdownInterval = setInterval(() => {
+      secondsLeft--;
+      setTimeRemaining(secondsLeft);
+      
+      if (secondsLeft <= 0) {
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+    
+    // Timeout principal de 25 segundos
+    blinkTimeoutRef.current = setTimeout(() => {
+      clearInterval(countdownInterval);
+      handleBlinkTimeout();
+    }, 25000);
+  };
+
+  /**
+   * Manejar el timeout de la prueba de parpadeo
+   */
+  const handleBlinkTimeout = () => {
+    console.log('[BiometricLogin] Timeout de prueba de vida alcanzado');
+    setStep('timeout-error');
+    setMessage('⏱️ Tiempo agotado. No se detectó el parpadeo requerido.');
+  };
+
+  /**
+   * Limpiar el temporizador de parpadeo
+   */
+  const clearBlinkTimeout = () => {
+    if (blinkTimeoutRef.current) {
+      clearTimeout(blinkTimeoutRef.current);
+      blinkTimeoutRef.current = null;
+    }
   };
 
   /**
@@ -176,6 +225,7 @@ const BiometricLogin = ({ onSuccess, onError }) => {
 
         if (blinkCount >= 2) {
           setBlinkDetected(true);
+          clearBlinkTimeout(); // Limpiar el timeout al completar exitosamente
           setMessage('¡Prueba de vida completada! Preparando captura...');
           setTimeout(() => {
             startCountdown();
@@ -294,12 +344,14 @@ const BiometricLogin = ({ onSuccess, onError }) => {
    * Reiniciar proceso
    */
   const restart = () => {
+    clearBlinkTimeout(); // Limpiar timeout si existe
     setStep('ready');
     setMessage('Listo para iniciar. Ingrese su email.');
     setEmail('');
     setChallengeToken('');
     setBlinkDetected(false);
     setCountdown(0);
+    setTimeRemaining(25);
   };
 
   /**
@@ -310,6 +362,7 @@ const BiometricLogin = ({ onSuccess, onError }) => {
 
     return () => {
       stopCamera();
+      clearBlinkTimeout(); // Limpiar el timeout al desmontar
     };
   }, []);
 
@@ -336,6 +389,14 @@ const BiometricLogin = ({ onSuccess, onError }) => {
             <div className="video-overlay blink-indicator">
               <div className="blink-eye">👁️</div>
               <p>Parpadee lentamente</p>
+              <p style={{
+                marginTop: '0.5rem',
+                fontSize: '0.9rem',
+                color: timeRemaining <= 10 ? '#FFA500' : '#fff',
+                fontWeight: '500'
+              }}>
+                ⏱️ {timeRemaining}s restantes
+              </p>
             </div>
           )}
 
@@ -390,6 +451,48 @@ const BiometricLogin = ({ onSuccess, onError }) => {
             <button onClick={restart} className="btn btn-secondary">
               Reintentar
             </button>
+          )}
+
+          {step === 'timeout-error' && (
+            <div style={{
+              width: '100%',
+              padding: '1.5rem',
+              background: 'rgba(229, 74, 122, 0.1)',
+              borderRadius: '12px',
+              border: '2px solid var(--color-secondary)',
+              textAlign: 'center',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏱️</div>
+              <p style={{ margin: '0 0 0.5rem 0', color: 'var(--color-secondary)', fontSize: '1.1rem', fontWeight: '700' }}>
+                Reto No Superado
+              </p>
+              <p style={{ margin: '0 0 1rem 0', color: 'var(--color-neutral-light)', fontSize: '0.9rem' }}>
+                {message}
+              </p>
+              <div style={{
+                padding: '1rem',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: '8px',
+                marginBottom: '1rem'
+              }}>
+                <p style={{ margin: 0, color: 'var(--color-neutral-light)', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                  <strong style={{ color: 'var(--color-secondary)' }}>⚠️ Challenge No Pass:</strong><br/>
+                  No se detectó el parpadeo requerido dentro del tiempo límite de 25 segundos.
+                  Asegúrate de parpadear claramente 2 veces cuando se te indique.
+                </p>
+              </div>
+              <button
+                onClick={restart}
+                className="btn btn-secondary"
+                style={{
+                  width: '100%',
+                  marginTop: '0.5rem'
+                }}
+              >
+                🔄 Reintentar
+              </button>
+            </div>
           )}
 
           {step === 'success' && onSuccess && (

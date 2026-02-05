@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { invalidateCache } = require('../utils/cache');
+const mongoose = require('mongoose');
 
 /**
  * Get all users with pagination and search
@@ -78,14 +79,29 @@ exports.getAllUsers = async (req, res) => {
  */
 exports.getUserById = async (req, res) => {
   try {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
     }
     res.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -108,10 +124,17 @@ exports.createUser = async (req, res) => {
 
     const savedUser = await user.save();
     invalidateCache('/users');
-    res.status(201).json(savedUser);
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user: savedUser
+    });
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -122,11 +145,24 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     console.log(`Updating user with id: ${req.params.id}`);
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
+
     const user = await User.findById(req.params.id);
     
     if (!user) {
       console.log('User not found');
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
     }
 
     // Update fields if provided
@@ -141,10 +177,17 @@ exports.updateUser = async (req, res) => {
     const updatedUser = await user.save();
     console.log('User updated successfully');
     invalidateCache('/users');
-    res.json(updatedUser);
+    res.json({
+      success: true,
+      message: 'User updated successfully',
+      user: updatedUser
+    });
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -155,20 +198,40 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     console.log(`Deleting user with id: ${req.params.id}`);
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
+
     const user = await User.findById(req.params.id);
     
     if (!user) {
       console.log('User not found');
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
     }
 
     await user.deleteOne();
     console.log('User deleted successfully');
     invalidateCache('/users');
-    res.json({ message: 'User deleted successfully', deletedId: req.params.id });
+    res.json({ 
+      success: true,
+      message: 'User deleted successfully', 
+      deletedId: req.params.id 
+    });
   } catch (error) {
     console.error('Error deleting user:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
@@ -179,6 +242,16 @@ exports.deleteUser = async (req, res) => {
 exports.activateUser = async (req, res) => {
   try {
     console.log(`Activating user with id: ${req.params.id}`);
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
+
     const user = await User.findById(req.params.id);
     
     if (!user) {
@@ -224,6 +297,16 @@ exports.activateUser = async (req, res) => {
 exports.deactivateUser = async (req, res) => {
   try {
     console.log(`Deactivating user with id: ${req.params.id}`);
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
+
     const user = await User.findById(req.params.id);
     
     if (!user) {
@@ -278,6 +361,15 @@ exports.changeUserRole = async (req, res) => {
   try {
     console.log(`Changing role for user with id: ${req.params.id}`);
     const { role } = req.body;
+    
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid user ID format:', req.params.id);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid user ID format' 
+      });
+    }
     
     if (!role || !['ADMIN', 'REGISTERED', 'USER'].includes(role)) {
       return res.status(400).json({
