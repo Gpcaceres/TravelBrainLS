@@ -609,8 +609,8 @@ const registerBiometric = async (req, res) => {
       });
     }
     
-    // Ajustado a 0.5 para permitir capturas desde canvas que tienen scores de texture/moiré más bajos
-    // pero siguen siendo legítimas capturas en vivo de webcam
+    // Ajustado a 0.5 (liveness) y 0.4 (quality) para permitir capturas desde canvas que tienen
+    // scores de texture/moiré más bajos pero siguen siendo legítimas capturas en vivo de webcam
     if (extractionData.liveness_score < 0.5) {
       return res.status(400).json({
         success: false,
