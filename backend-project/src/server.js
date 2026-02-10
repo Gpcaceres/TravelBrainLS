@@ -8,8 +8,13 @@ const config = require('./config/env');
  */
 const startServer = async () => {
   try {
-    // Connect to database
-    await connectDB();
+    // Try to connect to database (non-blocking)
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.error('⚠️  Starting server without database connection');
+      console.error('⚠️  Please check MongoDB configuration and network');
+    }
 
     // Create Express app
     const app = createApp();

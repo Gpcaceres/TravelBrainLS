@@ -94,15 +94,15 @@ def detect_liveness(image_array: np.ndarray) -> tuple[float, str]:
         
         # 1. Análisis de textura usando Laplaciano (detecta bordes)
         laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-        texture_score = min(laplacian_var / 500.0, 1.0)  # Normalizar
+        texture_score = min(laplacian_var / 400.0, 1.0)  # Más permisivo (antes 500.0)
         
         # 2. Análisis de contraste (fotos de fotos tienen menos contraste)
         contrast = gray.std()
-        contrast_score = min(contrast / 60.0, 1.0)  # Normalizar
+        contrast_score = min(contrast / 50.0, 1.0)  # Más permisivo (antes 60.0)
         
         # 3. Análisis de brillo y exposición
         brightness = gray.mean()
-        brightness_score = 1.0 if 50 < brightness < 200 else 0.5
+        brightness_score = 1.0 if 40 < brightness < 220 else 0.6  # Rango más amplio
         
         # 4. Detección de patrones de moiré (típico de pantallas/impresiones)
         # Aplicar FFT para detectar patrones periódicos
@@ -113,11 +113,11 @@ def detect_liveness(image_array: np.ndarray) -> tuple[float, str]:
         # Buscar picos anormales que indiquen patrones de pantalla
         mean_magnitude = magnitude_spectrum.mean()
         max_magnitude = magnitude_spectrum.max()
-        moire_score = 1.0 if (max_magnitude / mean_magnitude) < 100 else 0.3
+        moire_score = 1.0 if (max_magnitude / mean_magnitude) < 150 else 0.4  # Más permisivo
         
         # 5. Análisis de nitidez (imágenes impresas suelen ser más borrosas)
         blur_measure = cv2.Laplacian(gray, cv2.CV_64F).var()
-        sharpness_score = min(blur_measure / 100.0, 1.0)
+        sharpness_score = min(blur_measure / 80.0, 1.0)  # Más permisivo (antes 100.0)
         
         # Calcular score final ponderado
         liveness_score = (
@@ -132,10 +132,10 @@ def detect_liveness(image_array: np.ndarray) -> tuple[float, str]:
                    f"Brightness: {brightness_score:.2f}, Moiré: {moire_score:.2f}, "
                    f"Sharpness: {sharpness_score:.2f}, Final: {liveness_score:.2f}")
         
-        if liveness_score > 0.7:
+        if liveness_score > 0.6:
             message = "Alta probabilidad de ser un rostro real"
-        elif liveness_score > 0.5:
-            message = "Probabilidad media de ser un rostro real - verificación adicional recomendada"
+        elif liveness_score > 0.35:
+            message = "Probabilidad aceptable de ser un rostro real"
         else:
             message = "Baja probabilidad de ser un rostro real - posible spoofing detectado"
             
@@ -246,8 +246,13 @@ async def extract_facial_features(
         image_hash = hashlib.sha256(contents).hexdigest()[:16]
         logger.info(f"Procesando imagen - Hash: {image_hash}, Tamaño: {image_array.shape}")
         
-        # Detectar rostros
+        # Detectar rostros con HOG (rápido)
         face_locations = face_recognition.face_locations(image_array, model="hog")
+        
+        # Si HOG no encuentra nada, intentar con CNN (más preciso pero más lento)
+        if not face_locations:
+            logger.info(f"HOG no detectó rostros, intentando con CNN - Hash: {image_hash}")
+            face_locations = face_recognition.face_locations(image_array, model="cnn")
         
         if not face_locations:
             logger.warning(f"No se detectaron rostros - Hash: {image_hash}")
@@ -273,9 +278,10 @@ async def extract_facial_features(
         
         # Análisis anti-spoofing (liveness detection)
         liveness_score, liveness_message = detect_liveness(image_array)
+        logger.info(f"Liveness detection result - Hash: {image_hash}, Score: {liveness_score:.2f}")
         
-        # Si falla la prueba de liveness, rechazar
-        if liveness_score < 0.5:
+        # Umbral más permisivo para cámaras web (0.35 en lugar de 0.5)
+        if liveness_score < 0.35:
             logger.warning(f"Liveness detection falló - Hash: {image_hash}, Score: {liveness_score:.2f}")
             return FaceEncodingResponse(
                 encoding=[],

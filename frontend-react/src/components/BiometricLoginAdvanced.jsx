@@ -37,7 +37,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
   const [challengeToken, setChallengeToken] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [livenessTimeRemaining, setLivenessTimeRemaining] = useState(25); // Contador de 25 segundos
+  const [livenessTimeRemaining, setLivenessTimeRemaining] = useState(10); // Contador de 10 segundos
 
   // Estados de detección
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -467,7 +467,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
   };
 
   /**
-   * Iniciar timer de 25 segundos para la prueba de vida
+   * Iniciar timer de 10 segundos para la prueba de vida
    */
   const startLivenessTimer = () => {
     // Limpiar timer anterior si existe
@@ -475,8 +475,8 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
       clearInterval(livenessTimerRef.current);
     }
     
-    setLivenessTimeRemaining(25);
-    console.log('[BiometricLogin] Iniciando timer de 25 segundos');
+    setLivenessTimeRemaining(10);
+    console.log('[BiometricLogin] Iniciando timer de 10 segundos');
     
     livenessTimerRef.current = setInterval(() => {
       setLivenessTimeRemaining((prevTime) => {
@@ -517,7 +517,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
    */
   const handleLivenessTimeout = () => {
     updateStep('error');
-    setMessage('⏰ Tiempo agotado. No se detectaron los 2 parpadeos a tiempo. Por favor, inténtelo nuevamente.');
+    setMessage('⏰ Tiempo agotado (10s). No se detectaron los 2 parpadeos a tiempo. Por favor, inténtelo nuevamente.');
     if (onError) onError('liveness_timeout');
   };
 
@@ -653,7 +653,7 @@ const BiometricLoginAdvanced = ({ email: preValidatedEmail, onSuccess, onError }
     setBlinkCount(0);
     setLivenessScore(0);
     setCountdown(0);
-    setLivenessTimeRemaining(25);
+    setLivenessTimeRemaining(10);
   };
 
   return (

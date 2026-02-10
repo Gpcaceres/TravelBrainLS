@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 // Configure mongoose
 mongoose.set('strictQuery', false);
+mongoose.set('bufferCommands', false); // Fallar inmediatamente si no hay conexión
 
 /**
  * Connect to MongoDB database
@@ -36,7 +37,10 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    console.error('⚠️  Server will start without database connection');
+    console.error('⚠️  Database operations will fail until connection is established');
+    // No hacer exit() para permitir que el servidor inicie
+    // El servidor puede funcionar parcialmente sin DB (ej: health checks)
   }
 };
 

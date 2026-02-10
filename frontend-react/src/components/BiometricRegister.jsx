@@ -13,6 +13,12 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
   const streamRef = useRef(null);
   const isDetectingRef = useRef(false);
   const blinkTimeoutRef = useRef(null);
+  
+  // Refs para el control de parpadeo sin dependencias de estado
+  const blinkCountRef = useRef(0);
+  const lastEyeStateRef = useRef('open');
+  const isProcessingBlinksRef = useRef(false);
+  const stepRef = useRef('loading'); // Ref para el step actual
 
   const [step, setStep] = useState('loading');
   const [message, setMessage] = useState('Cargando modelos de IA...');
@@ -25,10 +31,23 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
   const [capturedImage, setCapturedImage] = useState(null);
   const [capturedBlob, setCapturedBlob] = useState(null);
   const [blinkDetected, setBlinkDetected] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(25);
+  const [timeRemaining, setTimeRemaining] = useState(10);
+  const [blinkCount, setBlinkCount] = useState(0);
+  const [eyeAspectRatio, setEyeAspectRatio] = useState(1.0);
+  const [blinkThreshold] = useState(0.3); // Umbral para detectar ojo cerrado
+  const [lastEyeState, setLastEyeState] = useState('open');
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
   const MODEL_URL = '/models';
+
+  /**
+   * Helper para actualizar step en state y ref simultáneamente
+   */
+  const updateStep = (newStep) => {
+    console.log('[BiometricRegister] Cambiando step:', stepRef.current, '→', newStep);
+    setStep(newStep);
+    stepRef.current = newStep;
+  };
 
   useEffect(() => {
     const loadModels = async () => {
@@ -61,14 +80,14 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
         console.log('[BiometricRegister] FaceExpressionNet loaded:', faceapi.nets.faceExpressionNet.isLoaded);
         
         setModelsLoaded(true);
-        setStep('idle');
+        updateStep('idle');
         setMessage('Modelos cargados. Iniciando cámara...');
         
         await startCamera();
       } catch (error) {
         console.error('[BiometricRegister] Error cargando modelos:', error);
         setMessage('Error cargando modelos de IA. Por favor, recargue la página.');
-        setStep('error');
+        updateStep('error');
       }
     };
 
@@ -105,7 +124,7 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               console.log('[BiometricRegister] Video reproduciendo, dimensiones:', 
                 videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
               
-              setStep('ready');
+              updateStep('ready');
               setMessage('Cámara iniciada. Posiciona tu rostro en el centro.');
               isDetectingRef.current = true;
               
@@ -122,7 +141,7 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
     } catch (error) {
       console.error('[BiometricRegister] Error accediendo a la cámara:', error);
       setMessage('No se pudo acceder a la cámara. Verifique los permisos.');
-      setStep('error');
+      updateStep('error');
     }
   };
 
@@ -185,7 +204,7 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
         const detection = await faceapi
           .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
             inputSize: 512,
-            scoreThreshold: 0.5
+            scoreThreshold: 0.4  // Más permisivo para mejor detección
           }))
           .withFaceLandmarks()
           .withFaceExpressions();
@@ -218,6 +237,15 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
             if (message === 'Posiciona tu rostro en el centro.' || message.includes('Cámara iniciada')) {
               setMessage('✅ Rostro detectado correctamente');
             }
+
+            // Si estamos en prueba de vida, analizar parpadeo
+            const currentStep = stepRef.current;
+            console.log('[BiometricRegister] Step actual:', currentStep);
+            
+            if (currentStep === 'liveness-test') {
+              console.log('[BiometricRegister] Analizando parpadeo...');
+              analyzeBlinking(resizedDetection);
+            }
           } else {
             if (faceDetected) {
               console.log('[BiometricRegister] Rostro perdido');
@@ -248,43 +276,61 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
     }
 
     // Iniciar prueba de vida con parpadeo
-    isDetectingRef.current = false;
-    setStep('liveness-test');
+    console.log('[BiometricRegister] Iniciando prueba de vida');
+    updateStep('liveness-test');
     setMessage('Por favor, parpadee lentamente 2 veces');
     setBlinkDetected(false);
-    setTimeRemaining(25);
+    setBlinkCount(0);
+    setLastEyeState('open');
+    setTimeRemaining(10);
     
-    // Iniciar temporizador de 25 segundos
+    // Resetear refs
+    blinkCountRef.current = 0;
+    lastEyeStateRef.current = 'open';
+    isProcessingBlinksRef.current = false;
+    
+    console.log('[BiometricRegister] Refs reseteados - blinkCount:', blinkCountRef.current);
+    
+    // Iniciar temporizador de 10 segundos
     startBlinkTimeout();
     
-    // Iniciar detección de parpadeo
-    setTimeout(() => {
-      detectBlinks();
-    }, 500);
+    // La detección de parpadeos se hace en el loop de detección facial
+    // No necesitamos llamar detectBlinks() aquí
   };
 
   /**
-   * Iniciar temporizador de 25 segundos para la prueba de parpadeo
+   * Iniciar temporizador de 10 segundos para la prueba de parpadeo
    */
   const startBlinkTimeout = () => {
-    let secondsLeft = 25;
-    setTimeRemaining(secondsLeft);
+    // Limpiar timer anterior si existe
+    if (blinkTimeoutRef.current) {
+      clearInterval(blinkTimeoutRef.current);
+    }
     
-    // Actualizar contador cada segundo
-    const countdownInterval = setInterval(() => {
-      secondsLeft--;
-      setTimeRemaining(secondsLeft);
-      
-      if (secondsLeft <= 0) {
-        clearInterval(countdownInterval);
-      }
+    setTimeRemaining(10);
+    console.log('[BiometricRegister] Iniciando timer de 10 segundos');
+    
+    blinkTimeoutRef.current = setInterval(() => {
+      setTimeRemaining((prevTime) => {
+        const newTime = prevTime - 1;
+        
+        if (newTime <= 0) {
+          // Tiempo agotado
+          console.log('[BiometricRegister] ⏰ Tiempo agotado para la prueba de vida');
+          clearInterval(blinkTimeoutRef.current);
+          blinkTimeoutRef.current = null;
+          handleBlinkTimeout();
+          return 0;
+        }
+        
+        // Advertencia en los últimos 5 segundos
+        if (newTime <= 5 && newTime > 0) {
+          console.log('[BiometricRegister] ⚠️ Solo quedan', newTime, 'segundos');
+        }
+        
+        return newTime;
+      });
     }, 1000);
-    
-    // Timeout principal de 25 segundos
-    blinkTimeoutRef.current = setTimeout(() => {
-      clearInterval(countdownInterval);
-      handleBlinkTimeout();
-    }, 25000);
   };
 
   /**
@@ -292,9 +338,9 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
    */
   const handleBlinkTimeout = () => {
     console.log('[BiometricRegister] Timeout de prueba de vida alcanzado');
-    setStep('timeout-error');
-    setMessage('⏱️ Tiempo agotado. No se detectó el parpadeo requerido.');
-    isDetectingRef.current = false;
+    updateStep('timeout-error');
+    setMessage('⏱️ Tiempo agotado (10s). No se detectaron los 2 parpadeos requeridos.');
+    isProcessingBlinksRef.current = true; // Detener procesamiento
   };
 
   /**
@@ -308,65 +354,105 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
   };
 
   /**
-   * Detección de parpadeo mediante análisis de frames
-   * Adaptado del componente BiometricLogin para prueba de vida
+   * Analizar parpadeo usando Eye Aspect Ratio (EAR) - llamado desde el loop de detección
    */
-  const detectBlinks = () => {
-    let blinkCount = 0;
-    let lastState = 'open'; // open o closed
+  const analyzeBlinking = (detection) => {
+    // Evitar procesamiento si ya completamos los 2 parpadeos
+    if (isProcessingBlinksRef.current) {
+      return;
+    }
 
-    const checkBlink = () => {
-      if (step !== 'liveness-test') return;
+    const landmarks = detection.landmarks;
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
 
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
+    // Calcular EAR (Eye Aspect Ratio)
+    const leftEAR = calculateEAR(leftEye);
+    const rightEAR = calculateEAR(rightEye);
+    const avgEAR = (leftEAR + rightEAR) / 2.0;
 
-      if (!canvas || !video) return;
+    // Log continuo del EAR para debugging
+    if (Math.random() < 0.1) {
+      console.log('[BiometricRegister] EAR actual:', avgEAR.toFixed(3), '| Threshold:', blinkThreshold, '| Estado:', lastEyeStateRef.current);
+    }
 
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    setEyeAspectRatio(avgEAR);
 
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const currentEyeState = lastEyeStateRef.current;
 
-      // Análisis de región de ojos
-      const imageData = context.getImageData(
-        canvas.width * 0.3,
-        canvas.height * 0.3,
-        canvas.width * 0.4,
-        canvas.height * 0.2
-      );
+    // Detectar cambio de estado del ojo
+    if (avgEAR < blinkThreshold && currentEyeState === 'open') {
+      // Ojo se cerró
+      console.log('[BiometricRegister] ✅ Ojo cerrado detectado! EAR:', avgEAR.toFixed(3), '<', blinkThreshold);
+      lastEyeStateRef.current = 'closed';
+      setLastEyeState('closed');
+    } else if (avgEAR >= blinkThreshold && currentEyeState === 'closed') {
+      // Ojo se abrió (parpadeo completo)
+      console.log('[BiometricRegister] ✅ Parpadeo completado! EAR:', avgEAR.toFixed(3), '>=', blinkThreshold);
+      lastEyeStateRef.current = 'open';
+      setLastEyeState('open');
+      
+      // Incrementar contador
+      blinkCountRef.current += 1;
+      const newCount = blinkCountRef.current;
+      setBlinkCount(newCount);
+      
+      console.log('[BiometricRegister] 🎯 Contador de parpadeos:', newCount, '/2');
+      setMessage(`Parpadeo detectado (${newCount}/2)`);
 
-      const brightness = calculateBrightness(imageData);
-
-      // Detectar cambio de estado (parpadeo)
-      if (brightness < 100 && lastState === 'open') {
-        lastState = 'closed';
-      } else if (brightness > 120 && lastState === 'closed') {
-        lastState = 'open';
-        blinkCount++;
-        setMessage(`Parpadeo detectado (${blinkCount}/2)`);
-
-        if (blinkCount >= 2) {
-          setBlinkDetected(true);
-          clearBlinkTimeout(); // Limpiar el timeout al completar exitosamente
-          setMessage('¡Prueba de vida completada! Preparando captura...');
-          setTimeout(() => {
-            startCountdown();
-          }, 1500);
-          return;
-        }
+      if (newCount >= 2) {
+        // Prueba de vida completada
+        console.log('[BiometricRegister] 🎉 ¡2 parpadeos detectados! Iniciando countdown...');
+        isProcessingBlinksRef.current = true; // Evitar más procesamiento
+        setBlinkDetected(true);
+        setMessage('¡Prueba de vida completada! Preparando captura...');
+        
+        // Detener el timer de 10 segundos
+        clearBlinkTimeout();
+        
+        // Iniciar countdown
+        setTimeout(() => {
+          console.log('[BiometricRegister] Ejecutando startCountdown()');
+          startCountdown();
+        }, 1500);
       }
-
-      // Continuar verificando
-      requestAnimationFrame(checkBlink);
-    };
-
-    checkBlink();
+    }
   };
 
   /**
-   * Calcular brillo promedio de una imagen
+   * Calcular Eye Aspect Ratio (EAR)
+   * Fórmula: EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||)
+   */
+  const calculateEAR = (eye) => {
+    // Puntos del ojo
+    const p1 = eye[0];
+    const p2 = eye[1];
+    const p3 = eye[2];
+    const p4 = eye[3];
+    const p5 = eye[4];
+    const p6 = eye[5];
+
+    // Distancias verticales
+    const A = euclideanDistance(p2, p6);
+    const B = euclideanDistance(p3, p5);
+
+    // Distancia horizontal
+    const C = euclideanDistance(p1, p4);
+
+    // EAR
+    const ear = (A + B) / (2.0 * C);
+    return ear;
+  };
+
+  /**
+   * Calcular distancia euclidiana entre dos puntos
+   */
+  const euclideanDistance = (p1, p2) => {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  };
+
+  /**
+   * Calcular brillo promedio de una imagen (mantener por compatibilidad)
    */
   const calculateBrightness = (imageData) => {
     let sum = 0;
@@ -384,37 +470,89 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
    * Iniciar countdown después de la prueba de vida
    */
   const startCountdown = async () => {
-    setStep('countdown');
-    setMessage('Preparando captura...');
+    console.log('[BiometricRegister] Iniciando countdown...');
+    updateStep('countdown');
+    setMessage('Preparando captura... Mantenga su rostro en el centro.');
+
+    // Dar un segundo adicional para que el usuario se estabilice
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     for (let i = 3; i > 0; i--) {
       setCountdown(i);
-      setMessage(`Capturando en ${i}...`);
+      setMessage(`Capturando en ${i}... Mantenga su rostro quieto`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
+    console.log('[BiometricRegister] Countdown completado, capturando imagen...');
     await captureImage();
   };
 
-  const captureImage = async () => {
-    setStep('capturing');
-    setMessage('📸 Capturando imagen...');
+  const captureImage = async (attemptNumber = 1) => {
+    const MAX_ATTEMPTS = 3;
+    updateStep('capturing');
+    setMessage('📸 Verificando y capturando imagen...');
 
-    const canvas = document.createElement('canvas');
-    const video = videoRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    
-    // Importante: NO voltear la imagen para el backend
-    ctx.drawImage(video, 0, 0);
+    try {
+      const video = videoRef.current;
+      
+      // CRÍTICO: Verificar que face-api.js detecte un rostro ANTES de capturar
+      console.log(`[BiometricRegister] Intento de captura ${attemptNumber}/${MAX_ATTEMPTS} - Verificando detección de rostro...`);
+      const detection = await faceapi
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({
+          inputSize: 512,
+          scoreThreshold: 0.4  // Umbral más permisivo
+        }))
+        .withFaceLandmarks();
+      
+      if (!detection) {
+        console.warn(`[BiometricRegister] ⚠️ Intento ${attemptNumber}: No se detectó rostro en el momento de captura`);
+        
+        if (attemptNumber < MAX_ATTEMPTS) {
+          setMessage(`⚠️ No se detectó rostro. Reintentando (${attemptNumber}/${MAX_ATTEMPTS})...`);
+          // Reintentar después de 1.5 segundos
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return captureImage(attemptNumber + 1);
+        } else {
+          console.error('[BiometricRegister] ❌ Máximo de intentos alcanzado');
+          setMessage('❌ No se pudo detectar rostro después de varios intentos. Por favor, asegúrese de estar bien iluminado y de frente a la cámara.');
+          updateStep('error');
+          return;
+        }
+      }
+      
+      console.log('[BiometricRegister] ✅ Rostro detectado, capturando imagen con alta resolución...');
+      
+      const canvas = document.createElement('canvas');
+      // Usar resolución completa del video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // Importante: NO voltear la imagen para el backend
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      console.log('[BiometricRegister] Canvas creado:', canvas.width, 'x', canvas.height);
 
-    canvas.toBlob(async (blob) => {
-      setCapturedBlob(blob); // Guardar blob para enviar al backend
-      setCapturedImage(URL.createObjectURL(blob));
-      setStep('preview');
-      setMessage('Revisa tu foto. ¿Se ve bien?');
-    }, 'image/jpeg', 0.95);
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          console.error('[BiometricRegister] Error: blob es null');
+          setMessage('❌ Error al capturar imagen. Reintente.');
+          updateStep('error');
+          return;
+        }
+        
+        console.log('[BiometricRegister] Blob creado - tamaño:', blob.size, 'bytes');
+        setCapturedBlob(blob);
+        setCapturedImage(URL.createObjectURL(blob));
+        updateStep('preview');
+        setMessage('Revisa tu foto. ¿Se ve bien?');
+      }, 'image/jpeg', 0.95);
+      
+    } catch (error) {
+      console.error('[BiometricRegister] Error en captureImage:', error);
+      setMessage('❌ Error al capturar imagen: ' + error.message);
+      updateStep('error');
+    }
   };
 
   const handleConfirm = async () => {
@@ -451,7 +589,19 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
         } else {
           // Verificar si es un error de rostro duplicado
           if (response.status === 409 || data.isDuplicate) {
-            setMessage(`⚠️ ${data.message || 'Este rostro ya está registrado en el sistema'}`);
+            if (data.errorType === 'DUPLICATE_FACE' && data.details) {
+              const { ownerEmail, ownerName, registeredAt, similarity } = data.details;
+              const similarityPercent = Math.round(parseFloat(similarity) * 100);
+              setMessage(
+                `⚠️ Este rostro ya está registrado\n\n` +
+                `👤 Usuario: ${ownerName}\n` +
+                `📧 Email: ${ownerEmail}\n` +
+                `📅 Registrado: ${registeredAt}\n` +
+                `🎯 Similitud: ${similarityPercent}%`
+              );
+            } else {
+              setMessage(`⚠️ ${data.message || 'Este rostro ya está registrado en el sistema'}`);
+            }
             setStep('duplicate-error');
           } else {
             throw new Error(data.message || 'Error al validar biometría');
@@ -493,7 +643,19 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
       } else {
         // Verificar si es un error de rostro duplicado
         if (response.status === 409 || data.isDuplicate) {
-          setMessage(`⚠️ ${data.message || 'Este rostro ya está registrado en el sistema'}`);
+          if (data.errorType === 'DUPLICATE_FACE' && data.details) {
+            const { ownerEmail, ownerName, registeredAt, similarity } = data.details;
+            const similarityPercent = Math.round(parseFloat(similarity) * 100);
+            setMessage(
+              `⚠️ Este rostro ya está registrado\n\n` +
+              `👤 Usuario: ${ownerName}\n` +
+              `📧 Email: ${ownerEmail}\n` +
+              `📅 Registrado: ${registeredAt}\n` +
+              `🎯 Similitud: ${similarityPercent}%`
+            );
+          } else {
+            setMessage(`⚠️ ${data.message || 'Este rostro ya está registrado en el sistema'}`);
+          }
           setStep('duplicate-error');
         } else {
           throw new Error(data.message || 'Error al registrar biometría');
@@ -512,9 +674,14 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
     setCapturedImage(null);
     setCapturedBlob(null);
     setBlinkDetected(false);
+    setBlinkCount(0);
+    blinkCountRef.current = 0;
+    lastEyeStateRef.current = 'open';
+    setLastEyeState('open');
+    isProcessingBlinksRef.current = false;
     clearBlinkTimeout(); // Limpiar timeout si existe
-    setTimeRemaining(25);
-    setStep('ready');
+    setTimeRemaining(10);
+    updateStep('ready');
     setMessage('Posiciona tu rostro en el centro.');
     isDetectingRef.current = true;
     startFaceDetection();
@@ -600,30 +767,40 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              background: 'rgba(0, 0, 0, 0.8)',
+              background: 'rgba(0, 0, 0, 0.85)',
               padding: '2rem',
               borderRadius: '12px',
               textAlign: 'center',
               border: '2px solid var(--color-primary)',
               zIndex: 10
             }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👁️</div>
+              <div style={{ fontSize: '4rem', marginBottom: '1rem' }} className="eye-animation">👁️</div>
               <p style={{ 
                 margin: '0 0 0.5rem 0', 
                 color: 'var(--color-primary)', 
                 fontSize: '1.2rem',
                 fontWeight: '600'
               }}>
-                Parpadee lentamente
+                Parpadee 2 veces
               </p>
-              <p style={{
-                margin: 0,
-                color: timeRemaining <= 10 ? '#FFA500' : 'var(--color-neutral-light)',
-                fontSize: '0.9rem',
-                fontWeight: '500'
+              <div className="blink-counter" style={{
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                color: '#47F59A',
+                margin: '1rem 0'
               }}>
-                ⏱️ {timeRemaining}s restantes
-              </p>
+                {blinkCount}/2
+              </div>
+              <div className="liveness-timer" style={{
+                marginTop: '1rem',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: timeRemaining <= 5 ? '#ff4444' : '#47F59A',
+                textShadow: timeRemaining <= 5 ? '0 0 10px rgba(255, 68, 68, 0.8)' : 'none',
+                animation: timeRemaining <= 5 ? 'pulse 0.5s ease-in-out infinite' : 'none'
+              }}>
+                ⏱️ {timeRemaining}s
+              </div>
             </div>
           )}
           {capturedImage && (
@@ -890,6 +1067,9 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               <button
                 className="btn btn-primary btn-block"
                 onClick={() => {
+                  // Limpiar imagen capturada anterior
+                  setCapturedImage(null);
+                  setCapturedBlob(null);
                   setStep('idle');
                   setMessage('Posiciona tu rostro en el centro.');
                   startCamera();
@@ -925,9 +1105,19 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               <p style={{ margin: '0 0 0.5rem 0', color: '#FFA500', fontSize: '1.1rem', fontWeight: '700' }}>
                 Rostro Ya Registrado
               </p>
-              <p style={{ margin: '0 0 1rem 0', color: 'var(--color-neutral-light)', fontSize: '0.9rem' }}>
+              <div style={{ 
+                margin: '0 0 1rem 0', 
+                color: 'var(--color-neutral-light)', 
+                fontSize: '0.95rem',
+                whiteSpace: 'pre-line',
+                textAlign: 'left',
+                padding: '1rem',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: '8px',
+                lineHeight: '1.8'
+              }}>
                 {message}
-              </p>
+              </div>
               <div style={{
                 padding: '1rem',
                 background: 'rgba(0, 0, 0, 0.3)',
@@ -988,16 +1178,24 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               }}>
                 <p style={{ margin: 0, color: 'var(--color-neutral-light)', fontSize: '0.85rem', lineHeight: '1.6' }}>
                   <strong style={{ color: 'var(--color-secondary)' }}>⚠️ Challenge No Pass:</strong><br/>
-                  No se detectó el parpadeo requerido dentro del tiempo límite de 25 segundos.
+                  No se detectó el parpadeo requerido dentro del tiempo límite de 10 segundos.
                   Asegúrate de parpadear claramente 2 veces cuando se te indique.
                 </p>
               </div>
               <button
                 className="btn btn-primary btn-block"
                 onClick={() => {
+                  // Limpiar imagen capturada anterior
+                  setCapturedImage(null);
+                  setCapturedBlob(null);
                   clearBlinkTimeout();
-                  setTimeRemaining(25);
-                  setStep('ready');
+                  setTimeRemaining(10);
+                  blinkCountRef.current = 0;
+                  setBlinkCount(0);
+                  lastEyeStateRef.current = 'open';
+                  setLastEyeState('open');
+                  isProcessingBlinksRef.current = false;
+                  updateStep('ready');
                   setMessage('Posiciona tu rostro en el centro.');
                   isDetectingRef.current = true;
                   startFaceDetection();

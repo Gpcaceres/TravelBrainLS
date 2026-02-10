@@ -39,7 +39,7 @@ const biometricChallengeSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now,
-      expires: 120 // Auto-eliminar después de 120 segundos (2 minutos)
+      expires: 300 // Auto-eliminar después de 300 segundos (5 minutos)
     },
     // Timestamp de uso
     usedAt: {
@@ -64,7 +64,7 @@ const biometricChallengeSchema = new mongoose.Schema(
  */
 biometricChallengeSchema.index({ token: 1, status: 1 });
 biometricChallengeSchema.index({ email: 1, createdAt: -1 });
-biometricChallengeSchema.index({ createdAt: 1 }, { expireAfterSeconds: 120 });
+biometricChallengeSchema.index({ createdAt: 1 }, { expireAfterSeconds: 300 });
 
 /**
  * Método estático: Generar un nuevo desafío
@@ -106,11 +106,11 @@ biometricChallengeSchema.statics.validateAndUse = async function(token, email) {
     throw new Error('Desafío inválido o expirado');
   }
   
-  // Verificar que no haya expirado (120 segundos)
+  // Verificar que no haya expirado (300 segundos = 5 minutos)
   const now = new Date();
   const elapsed = (now - challenge.createdAt) / 1000;
   
-  if (elapsed > 120) {
+  if (elapsed > 300) {
     challenge.status = 'EXPIRED';
     await challenge.save();
     throw new Error('El desafío ha expirado');

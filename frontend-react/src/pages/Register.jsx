@@ -55,7 +55,15 @@ export default function Register() {
             <p className="auth-subtitle">Start your journey with TravelBrain</p>
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && (
+            <div className="alert alert-error" style={{ 
+              whiteSpace: 'pre-line',
+              textAlign: 'left',
+              lineHeight: '1.6'
+            }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
@@ -205,10 +213,30 @@ export default function Register() {
                   console.error('Registration error:', err)
                   let errorMessage = 'Error al crear la cuenta. Por favor, inténtalo nuevamente.'
                   
-                  if (err.response?.status === 409) {
+                  const errorData = err.response?.data
+                  
+                  if (err.response?.status === 409 && errorData?.errorType === 'DUPLICATE_USER') {
+                    const fieldLabel = errorData.field === 'email' ? 'correo electrónico' : 'nombre de usuario'
+                    const registeredDate = new Date(errorData.registeredAt).toLocaleDateString('es-EC', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })
+                    errorMessage = `⚠️ El ${fieldLabel} ya está registrado desde el ${registeredDate}.`
+                  } else if (err.response?.status === 409 && errorData?.errorType === 'DUPLICATE_FACE' && errorData?.details) {
+                    const { ownerEmail, ownerName, registeredAt, similarity } = errorData.details
+                    const similarityPercent = Math.round(parseFloat(similarity) * 100)
+                    errorMessage = (
+                      `⚠️ Este rostro ya está registrado\n\n` +
+                      `👤 Usuario: ${ownerName}\n` +
+                      `📧 Email: ${ownerEmail}\n` +
+                      `📅 Registrado: ${registeredAt}\n` +
+                      `🎯 Similitud: ${similarityPercent}%`
+                    )
+                  } else if (err.response?.status === 409) {
                     errorMessage = 'Este email o username ya está registrado.'
-                  } else if (err.response?.data?.message) {
-                    errorMessage = err.response.data.message
+                  } else if (errorData?.message) {
+                    errorMessage = errorData.message
                   }
                   
                   setError(errorMessage)

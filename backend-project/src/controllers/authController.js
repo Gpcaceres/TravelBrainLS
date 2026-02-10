@@ -199,10 +199,27 @@ exports.register = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: 'El email o username ya está registrado'
-      });
+      // Verificar si el usuario tiene biometría registrada
+      const existingBiometric = await FacialBiometric.findOne({ userId: existingUser._id });
+      
+      if (existingBiometric) {
+        // Usuario completamente registrado - mensaje específico
+        const conflictField = existingUser.email === email.toLowerCase() ? 'correo electrónico' : 'nombre de usuario';
+        const conflictValue = existingUser.email === email.toLowerCase() ? email : username;
+        
+        console.log(`[Register] ❌ Usuario ya registrado completamente - ${conflictField}: ${conflictValue}`);
+        
+        return res.status(409).json({
+          success: false,
+          message: `El ${conflictField} "${conflictValue}" ya está registrado en el sistema`,
+          errorType: 'DUPLICATE_USER',
+          field: conflictField === 'correo electrónico' ? 'email' : 'username',
+          registeredAt: existingUser.createdAt
+        });
+      }
+      
+      // Usuario existe pero sin biometría - permitir completar el registro
+      console.log('[Register] ℹ️ Usuario existe sin biometría, permitiendo completar registro:', existingUser.email);
     }
 
     // Procesar imagen biométrica ANTES de guardar el usuario
@@ -288,12 +305,39 @@ exports.register = async (req, res) => {
         );
 
         if (comparisonResponse.data.match) {
-          console.log('[Register] ⚠️ Rostro duplicado detectado!');
-          return res.status(409).json({
-            success: false,
-            message: 'Este rostro ya está registrado en el sistema',
-            isDuplicate: true
-          });
+          // Rostro duplicado encontrado - obtener información del usuario propietario
+          const ownerUser = await User.findById(existingBio.userId);
+          
+          if (ownerUser) {
+            const registrationDate = new Date(existingBio.registeredAt).toLocaleDateString('es-EC', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+            
+            console.log(`[Register] ⚠️ Rostro duplicado detectado! Pertenece a: ${ownerUser.email}`);
+            
+            return res.status(409).json({
+              success: false,
+              message: `Este rostro ya está registrado en el sistema`,
+              errorType: 'DUPLICATE_FACE',
+              details: {
+                ownerEmail: ownerUser.email.replace(/(.{2})(.*)(@.*)/, '$1***$3'), // Censurado parcialmente
+                ownerName: ownerUser.name,
+                registeredAt: registrationDate,
+                similarity: (1 - comparisonResponse.data.distance).toFixed(2)
+              },
+              isDuplicate: true
+            });
+          } else {
+            console.log('[Register] ⚠️ Rostro duplicado detectado!');
+            return res.status(409).json({
+              success: false,
+              message: 'Este rostro ya está registrado en el sistema',
+              errorType: 'DUPLICATE_FACE',
+              isDuplicate: true
+            });
+          }
         }
       } catch (compareError) {
         console.error('[Register] Error al comparar con biometría existente:', compareError.message);
@@ -302,22 +346,30 @@ exports.register = async (req, res) => {
 
     console.log('[Register] ✅ Rostro único verificado. Creando usuario...');
 
-    // Hashear la contraseña
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    let user;
+    
+    if (existingUser) {
+      // Usar usuario existente que no tiene biometría
+      user = existingUser;
+      console.log('[Register] Usando usuario existente:', user.email);
+    } else {
+      // Hashear la contraseña
+      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Crear nuevo usuario
-    const newUsername = username || email.split('@')[0];
-    const user = new User({
-      email: email.toLowerCase(),
-      username: newUsername,
-      name: name || newUsername,
-      passwordHash: passwordHash,
-      role: 'USER',
-      status: 'ACTIVE'
-    });
+      // Crear nuevo usuario
+      const newUsername = username || email.split('@')[0];
+      user = new User({
+        email: email.toLowerCase(),
+        username: newUsername,
+        name: name || newUsername,
+        passwordHash: passwordHash,
+        role: 'USER',
+        status: 'ACTIVE'
+      });
 
-    await user.save();
-    console.log('[Register] Nuevo usuario guardado:', user.email);
+      await user.save();
+      console.log('[Register] Nuevo usuario guardado:', user.email);
+    }
 
     // Guardar biometría
     const { encrypted, iv, authTag, salt } = FacialBiometric.encryptEncoding(
@@ -331,13 +383,10 @@ exports.register = async (req, res) => {
       iv: iv,
       authTag: authTag,
       salt: salt,
+      qualityScore: extractionData.quality_score,
+      livenessScore: extractionData.liveness_score,
       isActive: true,
-      registeredAt: new Date(),
-      metadata: {
-        captureQuality: extractionData.quality_score,
-        livenessScore: extractionData.liveness_score,
-        confidence: extractionData.confidence
-      }
+      registeredAt: new Date()
     });
 
     await biometric.save();
