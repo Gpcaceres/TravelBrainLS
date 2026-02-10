@@ -909,6 +909,38 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               >
                 🔄 Intentar Nuevamente
               </button>
+              {onCancel && (
+                <button
+                  className="btn btn-secondary btn-block"
+                  onClick={() => {
+                    stopCamera();
+                    onCancel();
+                  }}
+                  style={{
+                    marginTop: '0.5rem',
+                    background: 'transparent',
+                    color: 'var(--color-neutral-light)',
+                    border: '2px solid rgba(211, 218, 213, 0.2)',
+                    padding: '0.875rem',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = 'var(--color-secondary)';
+                    e.target.style.color = 'var(--color-secondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = 'rgba(211, 218, 213, 0.2)';
+                    e.target.style.color = 'var(--color-neutral-light)';
+                  }}
+                >
+                  ✕ Cancelar y Salir
+                </button>
+              )}
             </div>
           )}
 
@@ -943,8 +975,9 @@ const BiometricRegister = ({ onSuccess, onError, onCancel, registrationData = nu
               <button
                 className="btn btn-secondary btn-block"
                 onClick={() => {
-                  if (onError) {
-                    onError('duplicate_face');
+                  stopCamera();
+                  if (onCancel) {
+                    onCancel();
                   }
                 }}
                 style={{
