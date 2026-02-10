@@ -327,10 +327,10 @@ exports.register = async (req, res) => {
 
     const biometric = new FacialBiometric({
       userId: user._id,
-      encryptedEncoding: encryptedEncoding,
-      iv: iv,
-      authTag: authTag,
-      salt: salt,
+      encryptedEncoding,
+      iv,
+      authTag,
+      salt,
       isActive: true,
       registeredAt: new Date(),
       qualityScore: extractionData.quality_score,
