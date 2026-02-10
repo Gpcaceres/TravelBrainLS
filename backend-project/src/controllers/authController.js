@@ -320,24 +320,21 @@ exports.register = async (req, res) => {
     console.log('[Register] Nuevo usuario guardado:', user.email);
 
     // Guardar biometría
-    const { encrypted, iv, authTag, salt } = FacialBiometric.encryptEncoding(
+    const { encryptedEncoding, iv, authTag, salt } = FacialBiometric.encryptEncoding(
       extractionData.encoding,
       BIOMETRIC_MASTER_KEY
     );
 
     const biometric = new FacialBiometric({
       userId: user._id,
-      encryptedEncoding: encrypted,
-      iv: iv,
-      authTag: authTag,
-      salt: salt,
+      encryptedEncoding,
+      iv,
+      authTag,
+      salt,
       isActive: true,
       registeredAt: new Date(),
-      metadata: {
-        captureQuality: extractionData.quality_score,
-        livenessScore: extractionData.liveness_score,
-        confidence: extractionData.confidence
-      }
+      qualityScore: extractionData.quality_score,
+      livenessScore: extractionData.liveness_score
     });
 
     await biometric.save();
