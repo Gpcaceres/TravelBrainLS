@@ -609,16 +609,16 @@ const registerBiometric = async (req, res) => {
       });
     }
     
-    // Ajustado a 0.6 para permitir capturas desde canvas que tienen scores de texture/moiré más bajos
+    // Ajustado a 0.5 para permitir capturas desde canvas que tienen scores de texture/moiré más bajos
     // pero siguen siendo legítimas capturas en vivo de webcam
-    if (extractionData.liveness_score < 0.6) {
+    if (extractionData.liveness_score < 0.5) {
       return res.status(400).json({
         success: false,
         message: 'La imagen no pasó las pruebas de autenticidad. Use una cámara en vivo.'
       });
     }
     
-    if (extractionData.quality_score < 0.6) {
+    if (extractionData.quality_score < 0.4) {
       return res.status(400).json({
         success: false,
         message: 'La calidad de la imagen es insuficiente. Mejore la iluminación y enfoque.'
@@ -896,14 +896,14 @@ const validateFace = async (req, res) => {
       });
     }
     
-    if (extractionData.liveness_score < 0.6) {
+    if (extractionData.liveness_score < 0.5) {
       return res.status(400).json({
         success: false,
         message: 'La imagen no pasó las pruebas de autenticidad. Use una cámara en vivo.'
       });
     }
     
-    if (extractionData.quality_score < 0.6) {
+    if (extractionData.quality_score < 0.4) {
       return res.status(400).json({
         success: false,
         message: 'La calidad de la imagen es insuficiente. Mejore la iluminación y enfoque.'
