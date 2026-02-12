@@ -610,6 +610,9 @@ const registerBiometric = async (req, res) => {
       });
     }
     
+    // Ajustado a 0.5 (liveness) y 0.4 (quality) para permitir capturas desde canvas que tienen
+    // scores de texture/moiré más bajos pero siguen siendo legítimas capturas en vivo de webcam
+    if (extractionData.liveness_score < 0.5) {
     // Umbral de 0.35 para cámaras web normales - más permisivo para mejor compatibilidad
     // Scores típicos de webcam: 0.35-0.70 dependiendo de la calidad de la cámara
     console.log(`[BiometricRegister] Liveness score: ${extractionData.liveness_score}, Quality score: ${extractionData.quality_score}`);
@@ -626,6 +629,7 @@ const registerBiometric = async (req, res) => {
       });
     }
     
+    if (extractionData.quality_score < 0.4) {
     if (extractionData.quality_score < 0.4) {
       console.log(`[BiometricRegister] ❌ Calidad muy baja: ${extractionData.quality_score}`);
       return res.status(400).json({
@@ -952,6 +956,7 @@ const validateFace = async (req, res) => {
       });
     }
     
+    if (extractionData.quality_score < 0.4) {
     if (extractionData.quality_score < 0.4) {
       console.log(`[ValidateFace] ❌ Calidad muy baja: ${extractionData.quality_score}`);
       return res.status(400).json({
